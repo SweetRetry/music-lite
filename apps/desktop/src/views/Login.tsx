@@ -71,12 +71,12 @@ export function LoginView() {
           {qr.status === "loading" && <Skeleton className="size-full" />}
           {"svg" in qr && (
             <div
-              className={`size-full [&_svg]:size-full ${qr.status === "waiting" ? "" : "opacity-15"}`}
+              className={`size-full transition-opacity duration-200 ease-out animate-in fade-in [&_svg]:size-full ${qr.status === "waiting" ? "" : "opacity-15"}`}
               dangerouslySetInnerHTML={{ __html: qr.svg }}
             />
           )}
           {(qr.status === "expired" || qr.status === "error") && (
-            <div className="absolute inset-0 grid place-items-center">
+            <div className="absolute inset-0 grid place-items-center animate-in fade-in duration-200">
               <Button size="sm" onClick={() => setRound((r) => r + 1)}>
                 刷新二维码
               </Button>

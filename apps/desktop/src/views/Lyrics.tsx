@@ -23,7 +23,24 @@ const centered = (el: HTMLElement, view: HTMLElement) => el.offsetTop + el.offse
 
 const SKELETON_WIDTHS = ["w-3/4", "w-1/2", "w-2/3", "w-5/6", "w-2/5", "w-3/5", "w-4/5", "w-1/2"];
 
-export function LyricsView() {
+// The cover tints the page and changes with the song. The new one fades in over the old, which stays until it is covered.
+function Backdrop({ src }: { src: string }) {
+  const [layers, setLayers] = useState([src]);
+  if (src !== layers[layers.length - 1]) setLayers([...layers, src]);
+  return layers.map((s, i) => (
+    <img
+      key={s}
+      className="lyrics__backdrop"
+      src={s}
+      alt=""
+      aria-hidden
+      data-entering={i > 0 || undefined}
+      onAnimationEnd={() => setLayers((l) => (l[l.length - 1] === s ? [s] : l))}
+    />
+  ));
+}
+
+export function LyricsView({ closing }: { closing: boolean }) {
   const { queue, index } = usePlayer();
   const track = queue[index];
   const [lines, setLines] = useState<LyricLine[] | null>(() => (track && peek<LyricLine[]>(cacheKey(track.id))) || null);
@@ -110,9 +127,8 @@ export function LyricsView() {
   if (!track) return null;
 
   return (
-    <main className="lyrics">
-      {/* The cover, blown up and blurred, tints the page. It changes with the song. */}
-      <img className="lyrics__backdrop" src={cover(track.cover, 240)} alt="" aria-hidden />
+    <main className="lyrics" data-closing={closing || undefined}>
+      <Backdrop src={cover(track.cover, 240)} />
       {/* The title bar is not shown here, so this strip stays a drag region and holds the way out. */}
       <div data-tauri-drag-region className="lyrics__top">
         <Tip

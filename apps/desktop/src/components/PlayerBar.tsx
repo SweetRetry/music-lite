@@ -1,7 +1,6 @@
 import {
   CaretDownIcon,
   CaretUpIcon,
-  HeartIcon,
   MusicNotesIcon,
   PauseIcon,
   PlayIcon,
@@ -17,6 +16,7 @@ import { library, useLibrary } from "../library";
 import { player, usePlayer } from "../player";
 import { useUi } from "../ui";
 import { Artists } from "./Artists";
+import { LikeHeart } from "./LikeHeart";
 import { QualityMenu } from "./player/QualityMenu";
 import { QueuePanel } from "./player/QueuePanel";
 import { Range } from "./Range";
@@ -72,7 +72,7 @@ export function PlayerBar() {
                 />
               }
             >
-              <HeartIcon size={18} weight={liked.has(track.id) ? "fill" : "regular"} />
+              <LikeHeart key={track.id} size={18} liked={liked.has(track.id)} />
             </Tip>
           </>
         ) : (

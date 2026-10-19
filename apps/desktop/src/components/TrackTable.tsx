@@ -3,12 +3,13 @@ import { Button } from "@ncm-lite/ui/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ncm-lite/ui/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ncm-lite/ui/components/ui/tooltip";
 import { Link } from "@tanstack/react-router";
-import { CrosshairIcon, DotsThreeIcon, HeartIcon, PlayIcon } from "@phosphor-icons/react";
+import { CrosshairIcon, DotsThreeIcon, PlayIcon } from "@phosphor-icons/react";
 import type { PlaylistSummary, Track } from "../api";
 import { cover, duration } from "../format";
 import { library, useLibrary } from "../library";
 import { player, playlistOrigin, usePlayer } from "../player";
 import { Artists } from "./Artists";
+import { LikeHeart } from "./LikeHeart";
 import { TrackContextMenu, TrackMoreMenu } from "./TrackMenu";
 
 // Row actions stay out of the way until the row is hovered or focused, so the list reads as names.
@@ -111,7 +112,7 @@ export function TrackTable({
                       }
                       onClick={() => library.toggleLike(t.id)}
                     >
-                      <HeartIcon weight={isLiked ? "fill" : "regular"} />
+                      <LikeHeart liked={isLiked} />
                     </Button>
                     <TrackMoreMenu
                       tracks={tracks}
