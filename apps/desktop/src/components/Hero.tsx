@@ -18,12 +18,12 @@ export function Hero({
   children?: React.ReactNode;
 }) {
   return (
-    <header className="flex items-end gap-6 pb-8">
+    <header className="flex items-end gap-8 pb-10">
       {art}
-      <div className="flex min-w-0 flex-col gap-4">
-        <div className="flex min-w-0 flex-col gap-1">
-          <h1 className="truncate text-2xl font-semibold tracking-tight">{title}</h1>
-          <p className="truncate text-sm text-muted-foreground">{meta}</p>
+      <div className="flex min-w-0 flex-col gap-5">
+        <div className="flex min-w-0 flex-col gap-2">
+          <h1 className="truncate text-4xl font-semibold tracking-tight">{title}</h1>
+          <p className="truncate text-base text-muted-foreground">{meta}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button size="lg" disabled={!tracks.length} onClick={() => player.playQueue(tracks, 0)}>

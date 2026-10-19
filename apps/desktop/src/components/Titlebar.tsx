@@ -15,6 +15,7 @@ import { useCanGoBack, useRouter } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { type Theme, useTheme } from "../theme";
+import { Account } from "./Account";
 
 const themes: { value: Theme; label: string }[] = [
   { value: "system", label: "跟随系统" },
@@ -75,7 +76,7 @@ export function Titlebar() {
   return (
     <header
       data-tauri-drag-region
-      className="relative z-10 col-span-full row-start-1 flex items-center gap-1 pr-3 pl-[88px] text-muted-foreground"
+      className="relative z-10 col-span-full row-start-1 flex items-center gap-1 pr-4 pl-24 text-muted-foreground"
     >
       <NavButton label="后退" disabled={!canBack} onClick={() => history.back()}>
         <ChevronLeft />
@@ -100,6 +101,9 @@ export function Titlebar() {
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
+      <div className="pl-2">
+        <Account />
+      </div>
     </header>
   );
 }

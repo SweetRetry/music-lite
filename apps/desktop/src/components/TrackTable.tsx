@@ -56,10 +56,10 @@ export function TrackTable({
                 onDoubleClick={() => player.playQueue(tracks, i)}
                 onKeyDown={(e) => e.key === "Enter" && e.target === e.currentTarget && player.playQueue(tracks, i)}
               >
-                <TableCell className="py-2">
+                <TableCell className="py-2.5">
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="relative size-10 shrink-0">
-                      <img className="size-10 rounded-md" src={cover(t.cover, 40)} alt="" loading="lazy" />
+                    <div className="relative size-12 shrink-0">
+                      <img className="size-12 rounded-md" src={cover(t.cover, 48)} alt="" loading="lazy" />
                       {isCurrent ? (
                         <span className="absolute inset-0 grid place-items-center rounded-md bg-background/60">
                           <span className="eq" data-playing={playing} />
@@ -77,14 +77,14 @@ export function TrackTable({
                     </div>
                     <div className="flex min-w-0 flex-col gap-0.5">
                       <div className="flex min-w-0 items-center gap-2">
-                        <span className="truncate text-sm text-foreground">{t.name}</span>
+                        <span className="truncate text-base text-foreground">{t.name}</span>
                         {t.vip && (
                           <Badge variant="outline" className="shrink-0 border-primary/60 text-primary">
                             VIP
                           </Badge>
                         )}
                       </div>
-                      <div className="truncate text-xs text-muted-foreground">
+                      <div className="truncate text-sm text-muted-foreground">
                         <Artists artists={t.artists} />
                         {t.reason && ` · ${t.reason}`}
                       </div>

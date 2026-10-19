@@ -1,7 +1,9 @@
+import { SidebarProvider } from "@ncm-lite/ui/components/ui/sidebar";
 import { Toaster } from "@ncm-lite/ui/components/ui/sonner";
 import { Outlet } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef } from "react";
 import { PlayerBar } from "./components/PlayerBar";
+import { PlaylistDialogs } from "./components/playlist/dialogs";
 import { Sidebar } from "./components/Sidebar";
 import { Fatal } from "./components/states";
 import { Titlebar } from "./components/Titlebar";
@@ -33,7 +35,8 @@ export function Shell() {
   if (error) return <Fatal message={error} />;
 
   return (
-    <>
+    // The provider only supplies sidebar context and --sidebar-width; `contents` keeps it out of the grid.
+    <SidebarProvider className="contents">
       <div className="shell">
         <Titlebar />
         <Sidebar searchRef={searchRef} />
@@ -47,7 +50,8 @@ export function Shell() {
         <PlayerBar />
       </div>
       {/* Outside the shell grid, which would give it a cell. Offset clears the player bar. */}
-      <Toaster theme={theme} position="bottom-center" offset={96} />
-    </>
+      <Toaster theme={theme} position="bottom-center" offset={104} />
+      <PlaylistDialogs />
+    </SidebarProvider>
   );
 }

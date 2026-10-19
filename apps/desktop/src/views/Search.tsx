@@ -8,9 +8,9 @@ export function SearchView({ q }: { q: string }) {
   if (!data) return <Loading />;
   return (
     <>
-      <header className="flex flex-col gap-1 pb-8">
-        <h1 className="truncate text-2xl font-semibold tracking-tight">「{q}」</h1>
-        <p className="text-sm text-muted-foreground">
+      <header className="flex flex-col gap-2 pb-10">
+        <h1 className="truncate text-4xl font-semibold tracking-tight">「{q}」</h1>
+        <p className="text-base text-muted-foreground">
           {data.length ? `${data.length} 首` : "没有找到相关歌曲，换个关键词试试"}
         </p>
       </header>
