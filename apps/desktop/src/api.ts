@@ -2,13 +2,17 @@
 // Raw NetEase payloads are normalized here so the UI only ever sees Track and Playlist.
 import { eapi } from "./eapi";
 
+export type Ref = { id: number; name: string };
+
 export type Track = {
   id: number;
   name: string;
-  artists: string;
-  album: string;
+  artists: Ref[];
+  album: Ref;
   cover: string;
   durationMs: number;
+  // fee 1 means the song needs a VIP subscription to play in full.
+  vip: boolean;
   reason?: string;
 };
 
@@ -16,29 +20,32 @@ export type LyricWord = { ms: number; durationMs: number; text: string };
 // words is present when NetEase has word-level timing (yrc) for the song.
 export type LyricLine = { ms: number; text: string; trans?: string; words?: LyricWord[] };
 
-export type PlaylistSummary = { id: number; name: string; cover: string; trackCount: number; mine: boolean };
+// liked marks the account's "我喜欢的音乐" playlist, which the UI treats as the library, not as a playlist.
+export type PlaylistSummary = { id: number; name: string; cover: string; trackCount: number; mine: boolean; liked: boolean };
 export type Playlist = PlaylistSummary & { creator: string; tracks: Track[] };
 export type Me = { uid: number; nickname: string; avatar: string; playlists: PlaylistSummary[]; liked: number[] };
 
 // NetEase hands out http:// media URLs. The packaged app runs on a secure origin where WebKit
 // blocks those, and the same CDNs serve https.
-const https = (url: string | null | undefined) => url?.replace(/^http:\/\//, "https://") ?? "";
+export const https = (url: string | null | undefined) => url?.replace(/^http:\/\//, "https://") ?? "";
 
-const toTrack = (s: any): Track => ({
+export const toTrack = (s: any): Track => ({
   id: s.id,
   name: s.name,
-  artists: (s.ar ?? []).map((a: any) => a.name).join(" / "),
-  album: s.al?.name ?? "",
+  artists: (s.ar ?? []).map((a: any) => ({ id: a.id, name: a.name })),
+  album: { id: s.al?.id ?? 0, name: s.al?.name ?? "" },
   cover: https(s.al?.picUrl),
   durationMs: s.dt ?? 0,
+  vip: s.fee === 1,
 });
 
-const toSummary = (p: any, uid: number): PlaylistSummary => ({
+export const toSummary = (p: any, uid: number): PlaylistSummary => ({
   id: p.id,
   name: p.specialType === 5 ? "我喜欢的音乐" : p.name,
   cover: https(p.coverImgUrl),
   trackCount: p.trackCount,
   mine: p.userId === uid,
+  liked: p.specialType === 5 && p.userId === uid,
 });
 
 export async function me(): Promise<Me> {
@@ -57,7 +64,7 @@ export async function me(): Promise<Me> {
   };
 }
 
-async function songDetails(ids: number[]): Promise<Track[]> {
+export async function songDetails(ids: number[]): Promise<Track[]> {
   const batches: number[][] = [];
   for (let i = 0; i < ids.length; i += 500) batches.push(ids.slice(i, i + 500));
   const results = await Promise.all(

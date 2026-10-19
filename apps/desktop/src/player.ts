@@ -1,6 +1,8 @@
 // One audio element, one queue. Songs without a playable source are skipped, not fatal.
-import { useEffect, useSyncExternalStore } from "react";
-import { cover, lite, type Track } from "./lite";
+import { useEffect } from "react";
+import { create } from "zustand";
+import { songUrl, type Track } from "./api";
+import { artistNames, cover } from "./format";
 
 export type PlayerState = {
   queue: Track[];
@@ -14,7 +16,6 @@ export type PlayerState = {
 };
 
 const audio = new Audio();
-const listeners = new Set<() => void>();
 
 const savedVolume = (() => {
   try {
@@ -25,7 +26,7 @@ const savedVolume = (() => {
 })();
 audio.volume = savedVolume;
 
-let state: PlayerState = {
+export const usePlayer = create<PlayerState>(() => ({
   queue: [],
   index: -1,
   playing: false,
@@ -34,26 +35,24 @@ let state: PlayerState = {
   duration: 0,
   volume: savedVolume,
   notice: "",
-};
+}));
 
-const set = (patch: Partial<PlayerState>) => {
-  state = { ...state, ...patch };
-  listeners.forEach((l) => l());
-};
+const set = usePlayer.setState;
+const state = () => usePlayer.getState();
 
 let loadToken = 0;
 
 async function load(index: number, skipped = 0): Promise<void> {
-  const track = state.queue[index];
+  const track = state().queue[index];
   if (!track) return set({ playing: false });
   const token = ++loadToken;
   set({ index, loading: true, position: 0, duration: track.durationMs / 1000, notice: "" });
-  const url = await lite.url(track.id).catch(() => null);
+  const url = await songUrl(track.id).catch(() => null);
   if (token !== loadToken) return;
   if (!url) {
-    if (skipped + 1 >= state.queue.length) return set({ loading: false, playing: false, notice: "这些歌都暂时无法播放" });
+    if (skipped + 1 >= state().queue.length) return set({ loading: false, playing: false, notice: "这些歌都暂时无法播放" });
     set({ notice: `「${track.name}」无法播放，已跳过` });
-    return load((index + 1) % state.queue.length, skipped + 1);
+    return load((index + 1) % state().queue.length, skipped + 1);
   }
   audio.src = url;
   await audio.play().catch(() => set({ playing: false }));
@@ -65,8 +64,8 @@ function updateMediaSession(t: Track) {
   if (!("mediaSession" in navigator)) return;
   navigator.mediaSession.metadata = new MediaMetadata({
     title: t.name,
-    artist: t.artists,
-    album: t.album,
+    artist: artistNames(t),
+    album: t.album.name,
     artwork: [{ src: cover(t.cover, 256), sizes: "512x512" }],
   });
 }
@@ -79,15 +78,15 @@ export const player = {
     return load(index);
   },
   toggle() {
-    if (state.index < 0) return;
+    if (state().index < 0) return;
     audio.paused ? audio.play() : audio.pause();
   },
   next() {
-    if (state.queue.length) load((state.index + 1) % state.queue.length);
+    if (state().queue.length) load((state().index + 1) % state().queue.length);
   },
   prev() {
     if (audio.currentTime > 3) audio.currentTime = 0;
-    else if (state.queue.length) load((state.index - 1 + state.queue.length) % state.queue.length);
+    else if (state().queue.length) load((state().index - 1 + state().queue.length) % state().queue.length);
   },
   seek(seconds: number) {
     audio.currentTime = seconds;
@@ -113,13 +112,6 @@ if ("mediaSession" in navigator) {
   navigator.mediaSession.setActionHandler("pause", () => audio.pause());
   navigator.mediaSession.setActionHandler("nexttrack", () => player.next());
   navigator.mediaSession.setActionHandler("previoustrack", () => player.prev());
-}
-
-export function usePlayer(): PlayerState {
-  return useSyncExternalStore(
-    (l) => (listeners.add(l), () => listeners.delete(l)),
-    () => state,
-  );
 }
 
 export function usePlayerShortcuts(focusSearch: () => void) {

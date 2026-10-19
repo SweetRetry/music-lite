@@ -1,6 +1,7 @@
 import "@ncm-lite/ui/globals.css";
 import "./styles.css";
+import { RouterProvider } from "@tanstack/react-router";
 import { createRoot } from "react-dom/client";
-import { App } from "./App";
+import { router } from "./router";
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(<RouterProvider router={router} />);
