@@ -12,6 +12,7 @@ A lightweight NetEase Cloud Music desktop client. Tauri 2 + React 19, pnpm + tur
 
 ## Conventions
 
+- Use a shadcn component wherever one fits (Button, Dialog, DropdownMenu, Sheet, Popover, Tooltip, Badge, Avatar, ScrollArea, Skeleton, ...). Do not build your own. Hand-roll only when shadcn has nothing for it.
 - Add UI components only with the shadcn CLI, run inside `packages/ui`: `pnpm dlx shadcn@latest add <name>`. Never hand-write them. Import as `@ncm-lite/ui/components/ui/<name>`.
 - Existing screens use the plain CSS in `apps/desktop/src/styles.css` with the Retry tokens. New UI uses Tailwind utilities and shadcn components with the same tokens (`bg-background`, `text-muted-foreground`, `border-border`).
 - NetEase hands out `http://` media URLs. Pass every image or audio URL through `https()` from `api.ts`.
