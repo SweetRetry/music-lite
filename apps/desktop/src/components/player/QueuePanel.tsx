@@ -5,6 +5,8 @@ import { ScrollArea } from "@ncm-lite/ui/components/ui/scroll-area";
 import { ListMusic, X } from "lucide-react";
 import { artistNames, cover, duration } from "../../format";
 import { player, usePlayer } from "../../player";
+import { useUi } from "../../ui";
+import { Tip } from "../ShortcutKeys";
 
 const ROW = 52;
 const MAX_HEIGHT = 420;
@@ -12,13 +14,21 @@ const MAX_HEIGHT = 420;
 export function QueuePanel() {
   const queue = usePlayer((s) => s.queue);
   const index = usePlayer((s) => s.index);
+  const open = useUi((s) => s.queueOpen);
+  const toggle = useUi((s) => s.toggleQueue);
   return (
-    <Popover>
-      <PopoverTrigger
-        render={<Button variant="ghost" size="icon-sm" className="text-muted-foreground" aria-label="播放队列" />}
+    <Popover open={open} onOpenChange={toggle}>
+      <Tip
+        label="播放队列"
+        id="queue"
+        render={
+          <PopoverTrigger
+            render={<Button variant="ghost" size="icon-sm" className="text-muted-foreground" aria-label="播放队列" />}
+          />
+        }
       >
         <ListMusic className="size-4" />
-      </PopoverTrigger>
+      </Tip>
       <PopoverContent side="top" align="end" sideOffset={12} className="w-96 gap-0 p-0">
         <div className="flex h-11 items-center justify-between px-4">
           <span className="font-medium">播放队列 {queue.length > 0 && <span className="text-muted-foreground">{queue.length}</span>}</span>

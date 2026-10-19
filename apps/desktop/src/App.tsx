@@ -4,39 +4,32 @@ import { Outlet } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { PlayerBar } from "./components/PlayerBar";
 import { PlaylistDialogs } from "./components/playlist/dialogs";
-import { focusSearch } from "./components/SearchBox";
+import { ShortcutsDialog } from "./components/ShortcutsDialog";
 import { Sidebar } from "./components/Sidebar";
 import { Fatal } from "./components/states";
 import { Titlebar } from "./components/Titlebar";
 import { useLibrary } from "./library";
-import { usePlayerShortcuts } from "./player";
+import { useShortcuts } from "./shortcuts";
 import { useTheme } from "./theme";
 import { useUi } from "./ui";
 import { LyricsView } from "./views/Lyrics";
 
 export function Shell() {
   const error = useLibrary((s) => s.error);
-  const { lyricsOpen, toggleLyrics } = useUi();
+  const lyricsOpen = useUi((s) => s.lyricsOpen);
   const theme = useTheme((s) => s.theme);
 
   useEffect(() => {
     useLibrary.getState().load();
   }, []);
 
-  usePlayerShortcuts(focusSearch);
-
-  useEffect(() => {
-    if (!lyricsOpen) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && toggleLyrics(false);
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [lyricsOpen]);
+  useShortcuts();
 
   if (error) return <Fatal message={error} />;
 
   return (
     // The provider only supplies sidebar context and --sidebar-width; `contents` keeps it out of the grid.
-    <SidebarProvider className="contents">
+    <SidebarProvider open className="contents">
       <div className="shell">
         <Titlebar />
         <Sidebar />
@@ -52,6 +45,7 @@ export function Shell() {
       {/* Outside the shell grid, which would give it a cell. Offset clears the player bar. */}
       <Toaster theme={theme} position="bottom-center" offset={104} />
       <PlaylistDialogs />
+      <ShortcutsDialog />
     </SidebarProvider>
   );
 }
