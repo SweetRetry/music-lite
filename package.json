@@ -1,0 +1,20 @@
+{
+  "name": "ncm-lite",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --hot src/server/index.ts",
+    "start": "NODE_ENV=production bun src/server/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.3",
+    "@types/react": "18",
+    "@types/react-dom": "18",
+    "typescript": "^7.0.2"
+  }
+}
