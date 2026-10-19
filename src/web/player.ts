@@ -72,6 +72,8 @@ function updateMediaSession(t: Track) {
 }
 
 export const player = {
+  // Read straight from the element; timeupdate only fires about 4 times a second.
+  time: () => audio.currentTime,
   playQueue(queue: Track[], index: number) {
     set({ queue });
     return load(index);

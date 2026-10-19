@@ -372,9 +372,10 @@ function PlayerBar({
 const lyricCache = new Map<number, LyricLine[]>();
 
 function LyricsView() {
-  const { queue, index, position } = usePlayer();
+  const { queue, index } = usePlayer();
   const track = queue[index];
   const [lines, setLines] = useState<LyricLine[] | null>(null);
+  const [active, setActive] = useState(-1);
   const [error, setError] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const userScrolledAt = useRef(0);
@@ -398,9 +399,29 @@ function LyricsView() {
     };
   }, [track?.id]);
 
-  const ms = position * 1000;
-  let active = -1;
-  if (lines) for (let i = 0; i < lines.length && lines[i].ms <= ms; i++) active = i;
+  // Each frame: find the current line, and for word-timed lines fill each word by its own clock.
+  // Word progress is written to CSS directly so React re-renders only when the line changes.
+  useEffect(() => {
+    if (!lines) return;
+    let frame = 0;
+    let last = -2;
+    const tick = () => {
+      const ms = player.time() * 1000;
+      let i = -1;
+      while (i + 1 < lines.length && lines[i + 1].ms <= ms) i++;
+      if (i !== last) setActive((last = i));
+      const words = lines[i]?.words;
+      if (words) {
+        scrollRef.current?.querySelectorAll<HTMLElement>(`[data-line="${i}"] .karaoke > span`).forEach((el, k) => {
+          const p = Math.min(1, Math.max(0, (ms - words[k].ms) / words[k].durationMs));
+          el.style.setProperty("--p", `${p * 100}%`);
+        });
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => cancelAnimationFrame(frame);
+  }, [lines]);
 
   // Follow the song unless the reader scrolled in the last 3 seconds.
   useEffect(() => {
@@ -436,7 +457,15 @@ function LyricsView() {
             aria-current={i === active}
             onClick={() => player.seek(l.ms / 1000)}
           >
-            <span>{l.text}</span>
+            {l.words ? (
+              <span className="karaoke">
+                {l.words.map((w, k) => (
+                  <span key={k}>{w.text}</span>
+                ))}
+              </span>
+            ) : (
+              <span>{l.text}</span>
+            )}
             {l.trans && <span className="lyrics__trans">{l.trans}</span>}
           </button>
         ))}

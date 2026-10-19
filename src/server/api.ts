@@ -12,7 +12,9 @@ export type Track = {
   reason?: string;
 };
 
-export type LyricLine = { ms: number; text: string; trans?: string };
+export type LyricWord = { ms: number; durationMs: number; text: string };
+// words is present when NetEase has word-level timing (yrc) for the song.
+export type LyricLine = { ms: number; text: string; trans?: string; words?: LyricWord[] };
 
 export type PlaylistSummary = { id: number; name: string; cover: string; trackCount: number; mine: boolean };
 export type Playlist = PlaylistSummary & { creator: string; tracks: Track[] };
@@ -97,8 +99,31 @@ function parseLrc(lrc = ""): Map<number, string> {
   return lines;
 }
 
+// yrc rows look like [lineStart,lineDuration](wordStart,wordDuration,0)word(...)word
+function parseYrc(yrc: string): LyricLine[] {
+  const lines: LyricLine[] = [];
+  for (const row of yrc.split("\n")) {
+    const head = row.match(/^\[(\d+),(\d+)\]/);
+    if (!head) continue;
+    const words = [...row.matchAll(/\((\d+),(\d+),\d+\)([^(]*)/g)].map(([, ms, d, text]) => ({
+      ms: Number(ms),
+      durationMs: Number(d),
+      text,
+    }));
+    const text = words.map((w) => w.text).join("").trim();
+    if (text) lines.push({ ms: Number(head[1]), text, words });
+  }
+  return lines;
+}
+
+// Version -1 asks for every lyric kind the song has; 0 makes the server omit yrc.
 export async function lyric(id: number): Promise<LyricLine[]> {
-  const res = await eapi("/api/song/lyric/v1", { id, cp: false, tv: 0, lv: 0, rv: 0, kv: 0, yv: 0, ytv: 0, yrv: 0 });
+  const res = await eapi("/api/song/lyric/v1", { id, cp: false, tv: -1, lv: -1, rv: -1, kv: -1, yv: -1, ytv: -1, yrv: -1 });
+  if (res.yrc?.lyric) {
+    const trans = parseLrc(res.ytlrc?.lyric || res.tlyric?.lyric);
+    const lines = parseYrc(res.yrc.lyric);
+    if (lines.length) return lines.map((l) => ({ ...l, trans: trans.get(l.ms) || undefined }));
+  }
   const trans = parseLrc(res.tlyric?.lyric);
   return [...parseLrc(res.lrc?.lyric)]
     .sort(([a], [b]) => a - b)

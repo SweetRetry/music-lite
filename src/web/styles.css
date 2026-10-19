@@ -701,3 +701,11 @@ button:disabled {
   font-size: 20px;
   line-height: 28px;
 }
+
+/* Word-timed lines: each word fills left to right as it is sung. */
+.lyrics__line[aria-current="true"] .karaoke > span {
+  background: linear-gradient(90deg, var(--foreground) var(--p, 0%), var(--subtle-foreground) var(--p, 0%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
