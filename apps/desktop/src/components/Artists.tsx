@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import type { Track } from "../api";
+import type { Ref } from "../api";
 
 // Artist names as links, joined like the official client.
-export function Artists({ track }: { track: Track }) {
-  return track.artists.map((a, i) => (
+export function Artists({ artists }: { artists: Ref[] }) {
+  return artists.map((a, i) => (
     <span key={`${a.id}-${i}`}>
       {i > 0 && " / "}
       {a.id ? (

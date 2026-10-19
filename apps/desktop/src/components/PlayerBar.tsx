@@ -23,7 +23,7 @@ export function PlayerBar() {
             </button>
             <div className="player__names">
               <span>{track.name}</span>
-              <span className="muted">{s.notice || <Artists track={track} />}</span>
+              <span className="muted">{s.notice || <Artists artists={track.artists} />}</span>
             </div>
             <button
               className="icon-btn like"

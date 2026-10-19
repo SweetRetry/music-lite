@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router";
 import { album } from "../api/album";
+import { Artists } from "../components/Artists";
 import { Description } from "../components/album/Description";
 import { Hero } from "../components/Hero";
 import { Loading, Notice, useLoad } from "../components/states";
@@ -12,18 +12,6 @@ export function AlbumView({ id }: { id: number }) {
   const { data, error } = useLoad(() => album(id));
   if (error) return <Notice message={`专辑没加载出来。${error}`} />;
   if (!data) return <Loading />;
-  const artists = data.artists.map((a, i) => (
-    <span key={`${a.id}-${i}`}>
-      {i > 0 && " / "}
-      {a.id ? (
-        <Link className="link" to="/artist/$id" params={{ id: a.id }}>
-          {a.name}
-        </Link>
-      ) : (
-        a.name
-      )}
-    </span>
-  ));
   const rest = [date(data.publishTime), `${data.trackCount} 首`].filter(Boolean).join(" · ");
   return (
     <>
@@ -32,8 +20,8 @@ export function AlbumView({ id }: { id: number }) {
         title={data.name}
         meta={
           <>
-            {artists}
-            {artists.length > 0 && " · "}
+            <Artists artists={data.artists} />
+            {data.artists.length > 0 && " · "}
             {rest}
           </>
         }

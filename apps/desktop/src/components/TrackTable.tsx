@@ -42,7 +42,7 @@ export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: P
                 </div>
               </td>
               <td className="muted">
-                <Artists track={t} />
+                <Artists artists={t.artists} />
               </td>
               <td className="muted">
                 {t.album.id ? (
