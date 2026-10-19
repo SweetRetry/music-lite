@@ -21,14 +21,13 @@ type Library = {
   subscribePlaylist: (id: number, on: boolean) => Promise<void>;
   addTracks: (pid: number, tracks: api.Track[]) => Promise<void>;
   removeTracks: (pid: number, ids: number[]) => Promise<void>;
-  reorder: (pid: number, from: number, to: number) => Promise<void>;
 };
 
 // Playlists the user may edit: created by them, and not the liked one, which 喜欢 manages.
 export const editable = (me: api.Me | null, id: number) =>
   !!me?.playlists.some((p) => p.id === id && p.mine && !p.liked);
 
-// Track writes to one playlist go out one at a time, so a burst of reorders lands in order.
+// Track writes to one playlist go out one at a time, so a burst of edits lands in order.
 const writes = new Map<number, Promise<unknown>>();
 function serial<T>(pid: number, run: () => Promise<T>): Promise<T> {
   const next = (writes.get(pid) ?? Promise.resolve()).catch(() => {}).then(run);
@@ -152,28 +151,6 @@ export const useLibrary = create<Library>((set, get) => {
           for (const [i, t] of removed) next.splice(i, 0, t);
           return next;
         });
-        throw e;
-      }
-      refreshPlaylists();
-    },
-    // Moves the track at `from` so it lands before the track now at `to` (to may equal length).
-    async reorder(pid, from, to) {
-      const p = get().opened[pid];
-      if (!p || to === from || to === from + 1) return;
-      const tracks = [...p.tracks];
-      const [moved] = tracks.splice(from, 1);
-      tracks.splice(to > from ? to - 1 : to, 0, moved);
-      setTracks(pid, () => tracks);
-      try {
-        await serial(pid, () =>
-          pl.reorder(
-            pid,
-            tracks.map((t) => t.id),
-          ),
-        );
-      } catch (e) {
-        // Later moves may have stacked on this one, so the server's order is the only safe undo.
-        get().invalidate(pid);
         throw e;
       }
       refreshPlaylists();

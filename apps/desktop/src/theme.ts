@@ -1,5 +1,5 @@
-// Theme preference. "system" leaves <html data-theme> unset so CSS follows prefers-color-scheme.
-// index.html applies the saved value before first paint. Keep KEY in sync with it.
+// Theme preference. The dark tokens live under .dark on <html>; "system" sets it from prefers-color-scheme
+// and follows changes. index.html applies the saved value before first paint. Keep KEY in sync with it.
 import { isTauri } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { create } from "zustand";
@@ -17,10 +17,10 @@ function load(): Theme {
   }
 }
 
+const systemDark = matchMedia("(prefers-color-scheme: dark)");
+
 function apply(theme: Theme) {
-  const root = document.documentElement;
-  if (theme === "system") delete root.dataset.theme;
-  else root.dataset.theme = theme;
+  document.documentElement.classList.toggle("dark", theme === "dark" || (theme === "system" && systemDark.matches));
   // Native window theme drives the traffic lights and vibrancy. null follows the OS.
   if (isTauri()) getCurrentWindow().setTheme(theme === "system" ? null : theme).catch(() => {});
 }
@@ -38,3 +38,4 @@ export const useTheme = create<{ theme: Theme; setTheme: (theme: Theme) => void 
 }));
 
 apply(useTheme.getState().theme);
+systemDark.addEventListener("change", () => apply(useTheme.getState().theme));

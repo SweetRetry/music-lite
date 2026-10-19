@@ -23,14 +23,13 @@ export async function subscribe(id: number, on: boolean): Promise<void> {
   await eapi(on ? "/api/playlist/subscribe" : "/api/playlist/unsubscribe", { id });
 }
 
-// op "add" and "del" take the songs to change; "update" takes the whole playlist in its new order.
-async function manipulate(pid: number, op: "add" | "del" | "update", ids: number[]): Promise<void> {
+// op "add" and "del" take the songs to change.
+async function manipulate(pid: number, op: "add" | "del", ids: number[]): Promise<void> {
   await eapi("/api/v1/playlist/manipulate/tracks", { pid, op, trackIds: JSON.stringify(ids) });
 }
 
 export const addTracks = (pid: number, ids: number[]) => manipulate(pid, "add", ids);
 export const removeTracks = (pid: number, ids: number[]) => manipulate(pid, "del", ids);
-export const reorder = (pid: number, ids: number[]) => manipulate(pid, "update", ids);
 
 // Just the playlist list, to refresh sidebar counts and covers after a change.
 export async function userPlaylists(uid: number): Promise<PlaylistSummary[]> {

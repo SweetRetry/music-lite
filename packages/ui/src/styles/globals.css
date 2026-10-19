@@ -5,70 +5,73 @@
 @source "../../../../apps/*/src";
 @source "../components";
 
-@custom-variant dark {
-  &:where([data-theme="dark"], [data-theme="dark"] *) {
-    @slot;
-  }
-  @media (prefers-color-scheme: dark) {
-    &:where(:root:not([data-theme]) *) {
-      @slot;
-    }
-  }
-}
+@custom-variant dark (&:is(.dark *));
 
 /*
- * Tokens from Retry (sweetRetry/DESIGN.md). Each token is light-dark(light, dark), resolved by
- * color-scheme. No data-theme on <html> follows the system, data-theme="light" | "dark" forces one.
+ * Standard shadcn tokens with NetEase Cloud Music colors. theme.ts puts .dark on <html> for the
+ * dark theme, and for "system" when the OS is dark. accent is the hover fill and is kept a step
+ * apart from muted and secondary, which are resting fills, so a hovered row never melts into a
+ * resting chip. Selection uses primary, never accent.
  */
 :root {
-  color-scheme: light dark;
-  --background: light-dark(#fbfbfd, #1c1c1e);
-  --foreground: light-dark(#1d1d1f, #f5f5f7);
-  --surface-1: light-dark(#f3f3f5, #242426);
-  --surface-2: light-dark(#ebebee, #2c2c2e);
-  --surface-3: light-dark(#e1e1e5, #363638);
-  --muted-foreground: light-dark(#66666b, #98989d);
-  --subtle-foreground: light-dark(#86868b, #6e6e73);
-  --primary: light-dark(#15804a, #2fbf71);
-  --primary-hover: light-dark(#116b3e, #45cc83);
-  --primary-foreground: light-dark(#ffffff, #06120b);
-  --destructive: light-dark(#c4352c, #eb6f66);
-  --destructive-soft: light-dark(rgba(196, 53, 44, 0.09), rgba(235, 111, 102, 0.14));
-  --border: light-dark(#e3e3e6, #38383a);
-  --input: light-dark(#d2d2d7, #48484a);
-  --ring: light-dark(#15804a, #2fbf71);
-  --ring-soft: light-dark(rgba(21, 128, 74, 0.18), rgba(47, 191, 113, 0.22));
-  --sidebar: light-dark(#f3f3f5, #161618);
-  --sidebar-accent: light-dark(#e6e6ea, #2a2a2c);
-  --ease: cubic-bezier(0.2, 0, 0, 1);
-}
-
-:root[data-theme="light"] {
   color-scheme: light;
+  --radius: 0.5rem;
+  --background: #ffffff;
+  --foreground: #283248;
+  --card: #ffffff;
+  --card-foreground: #283248;
+  --popover: #ffffff;
+  --popover-foreground: #283248;
+  --primary: #fc3d49;
+  --primary-foreground: #ffffff;
+  --secondary: #f0f3f6;
+  --secondary-foreground: #283248;
+  --muted: #f0f3f6;
+  --muted-foreground: #7b8290;
+  --accent: #e4e8ec;
+  --accent-foreground: #283248;
+  --destructive: #e5383b;
+  --border: #e4e8ec;
+  --input: #dbe0e6;
+  --ring: #fc3d49;
+  --sidebar: #f7f9fc;
+  --sidebar-foreground: #283248;
+  --sidebar-primary: #fc3d49;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8ecf1;
+  --sidebar-accent-foreground: #283248;
+  --sidebar-border: #e4e8ec;
+  --sidebar-ring: #fc3d49;
 }
 
-:root[data-theme="dark"] {
+.dark {
   color-scheme: dark;
-}
-
-/* shadcn roles mapped onto the Retry tokens above, so both modes follow it. */
-:root {
-  --card: var(--surface-1);
-  --card-foreground: var(--foreground);
-  --popover: var(--surface-2);
-  --popover-foreground: var(--foreground);
-  --secondary: var(--surface-2);
-  --secondary-foreground: var(--foreground);
-  --muted: var(--surface-2);
-  --accent: var(--surface-3);
-  --accent-foreground: var(--foreground);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: var(--border);
-  --sidebar-ring: var(--ring);
-  --radius: 8px;
+  --background: #13131a;
+  --foreground: #e6e6eb;
+  --card: #1e1e26;
+  --card-foreground: #e6e6eb;
+  --popover: #2b2b35;
+  --popover-foreground: #e6e6eb;
+  --primary: #fc3d49;
+  --primary-foreground: #ffffff;
+  --secondary: #26262f;
+  --secondary-foreground: #e6e6eb;
+  --muted: #22222b;
+  --muted-foreground: #8d8d99;
+  --accent: #33333e;
+  --accent-foreground: #ffffff;
+  --destructive: #ff5c5f;
+  --border: #2a2a33;
+  --input: #3a3a45;
+  --ring: #fc3d49;
+  --sidebar: #1a1a21;
+  --sidebar-foreground: #e6e6eb;
+  --sidebar-primary: #fc3d49;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2b2b35;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2a2a33;
+  --sidebar-ring: #fc3d49;
 }
 
 @theme inline {

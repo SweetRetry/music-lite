@@ -2,29 +2,18 @@ import { Badge } from "@ncm-lite/ui/components/ui/badge";
 import { Button } from "@ncm-lite/ui/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ncm-lite/ui/components/ui/table";
 import { Link } from "@tanstack/react-router";
-import { Ellipsis, GripVertical, Heart, Play } from "lucide-react";
+import { Ellipsis, Heart, Play } from "lucide-react";
 import type { PlaylistSummary, Track } from "../api";
 import { cover, duration } from "../format";
 import { library, useLibrary } from "../library";
 import { player, usePlayer } from "../player";
 import { Artists } from "./Artists";
-import { type Move, useReorder } from "./playlist/reorder";
 import { TrackContextMenu, TrackMoreMenu } from "./TrackMenu";
 
 // Row actions stay out of the way until the row is hovered or focused, so the list reads as names.
 const reveal = "opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100";
 
-export function TrackTable({
-  tracks,
-  playlist,
-  onReorder,
-}: {
-  tracks: Track[];
-  playlist?: PlaylistSummary;
-  // Given when the rows can be reordered: a playlist the user owns.
-  onReorder?: Move;
-}) {
-  const { dragging, handleProps, dropAt } = useReorder(onReorder);
+export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: PlaylistSummary }) {
   const current = usePlayer((s) => s.queue[s.index]?.id);
   const playing = usePlayer((s) => s.playing);
   const liked = useLibrary((s) => s.liked);
@@ -33,7 +22,7 @@ export function TrackTable({
       <TableHeader className="[&_tr]:border-0">
         <TableRow className="hover:bg-transparent">
           <TableHead className="text-xs font-normal text-muted-foreground">歌名 / 歌手</TableHead>
-          <TableHead className={onReorder ? "w-28" : "w-20"}>
+          <TableHead className="w-20">
             <span className="sr-only">操作</span>
           </TableHead>
           <TableHead className="w-1/3 text-xs font-normal text-muted-foreground">专辑</TableHead>
@@ -45,14 +34,11 @@ export function TrackTable({
           const isCurrent = t.id === current;
           const isLiked = liked.has(t.id);
           return (
-            // A playlist holds a song once, so its rows keep their identity (and focus) when they move.
-            <TrackContextMenu key={onReorder ? t.id : `${t.id}-${i}`} tracks={tracks} index={i} playlist={playlist}>
+            <TrackContextMenu key={`${t.id}-${i}`} tracks={tracks} index={i} playlist={playlist}>
               <TableRow
                 tabIndex={0}
                 aria-current={isCurrent}
-                data-drop={dropAt(i, tracks.length)}
-                data-dragging={dragging === i || undefined}
-                className="group border-0 hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:-outline-offset-2 aria-[current=true]:bg-muted data-dragging:opacity-50 data-[drop=after]:[&>td]:shadow-[inset_0_-2px_0_var(--primary)] data-[drop=before]:[&>td]:shadow-[inset_0_2px_0_var(--primary)] [&>td:first-child]:rounded-l-lg [&>td:last-child]:rounded-r-lg"
+                className="group border-0 hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:-outline-offset-2 aria-[current=true]:bg-muted [&>td:first-child]:rounded-l-lg [&>td:last-child]:rounded-r-lg"
                 onDoubleClick={() => player.playQueue(tracks, i)}
                 onKeyDown={(e) => e.key === "Enter" && e.target === e.currentTarget && player.playQueue(tracks, i)}
               >
@@ -93,17 +79,6 @@ export function TrackTable({
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-end gap-1" onDoubleClick={(e) => e.stopPropagation()}>
-                    {onReorder && (
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`拖动排序 ${t.name}，或按上下方向键移动`}
-                        className={`cursor-grab touch-none text-muted-foreground active:cursor-grabbing ${reveal}`}
-                        {...handleProps(i)}
-                      >
-                        <GripVertical />
-                      </Button>
-                    )}
                     <Button
                       variant="ghost"
                       size="icon-sm"
