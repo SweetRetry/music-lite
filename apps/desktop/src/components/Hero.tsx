@@ -9,12 +9,14 @@ export function Hero({
   title,
   meta,
   tracks,
+  origin,
   children,
 }: {
   art: React.ReactNode;
   title: string;
   meta: React.ReactNode;
   tracks: Track[];
+  origin?: string;
   children?: React.ReactNode;
 }) {
   // Play-all starts at the first song that can play.
@@ -28,7 +30,7 @@ export function Hero({
           <p className="truncate text-base text-muted-foreground">{meta}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="lg" disabled={first < 0} onClick={() => player.playQueue(tracks, first)}>
+          <Button size="lg" disabled={first < 0} onClick={() => player.playQueue(tracks, first, origin)}>
             <PlayIcon weight="fill" />
             播放全部
           </Button>

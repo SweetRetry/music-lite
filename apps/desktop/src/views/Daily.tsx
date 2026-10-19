@@ -3,6 +3,7 @@ import { daily } from "../api";
 import { Hero } from "../components/Hero";
 import { PageSkeleton } from "../components/skeletons";
 import { Notice, useCached } from "../components/states";
+import { DAILY_ORIGIN } from "../player";
 import { TrackTable } from "../components/TrackTable";
 
 // NetEase refreshes the recommendations at 06:00 local, so an earlier hour still belongs to yesterday's list.
@@ -26,8 +27,9 @@ export function DailyView() {
         title="每日推荐"
         meta={`根据你的口味生成，每天 6:00 更新 · ${data.length} 首`}
         tracks={data}
+        origin={DAILY_ORIGIN}
       />
-      <TrackTable tracks={data} />
+      <TrackTable tracks={data} origin={DAILY_ORIGIN} />
     </>
   );
 }

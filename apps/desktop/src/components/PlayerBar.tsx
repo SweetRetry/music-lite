@@ -1,6 +1,8 @@
 import {
+  CaretDownIcon,
+  CaretUpIcon,
   HeartIcon,
-  MicrophoneStageIcon,
+  MusicNotesIcon,
   PauseIcon,
   PlayIcon,
   SkipBackIcon,
@@ -24,6 +26,8 @@ export function PlayerBar() {
   const s = usePlayer();
   const liked = useLibrary((l) => l.liked);
   const { lyricsOpen, toggleLyrics } = useUi();
+  // Lyrics take the whole window, and the bar floats over them. Without a song there are no lyrics to show.
+  const immersive = lyricsOpen && !!s.queue[s.index];
   const onToggleLyrics = () => toggleLyrics();
   const track = s.queue[s.index];
   const disabled = !track;
@@ -37,12 +41,20 @@ export function PlayerBar() {
     player.setVolume(0);
   };
   return (
-    <footer className="player">
+    <footer className="player" data-immersive={immersive || undefined}>
       <div className="player__track">
         {track ? (
           <>
-            <button className="player__cover" aria-label={lyricsOpen ? "收起歌词" : "展开歌词"} onClick={onToggleLyrics}>
+            {/* Hover dims the cover and shows which way it opens, press shrinks it, focus rings it. */}
+            <button
+              className="player__cover group relative cursor-pointer transition-transform active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              aria-label={lyricsOpen ? "收起歌词" : "展开歌词"}
+              onClick={onToggleLyrics}
+            >
               <img src={cover(track.cover, 44)} alt="" />
+              <span className="absolute inset-0 grid place-items-center rounded-[inherit] bg-background/60 text-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                {lyricsOpen ? <CaretDownIcon weight="bold" /> : <CaretUpIcon weight="bold" />}
+              </span>
             </button>
             <div className="player__names">
               <span>{track.name}</span>
@@ -64,7 +76,16 @@ export function PlayerBar() {
             </Tip>
           </>
         ) : (
-          <span className="muted">{s.notice || "双击一首歌开始播放"}</span>
+          // An empty slot the size of the cover, so the bar keeps its shape. A notice still speaks.
+          s.notice ? (
+            <span className="muted">{s.notice}</span>
+          ) : (
+            <div className="flex items-center gap-3" aria-hidden>
+              <div className="grid size-12 place-items-center rounded-md bg-foreground/5 text-muted-foreground/60">
+                <MusicNotesIcon size={22} />
+              </div>
+            </div>
+          )
         )}
       </div>
       <div className="player__center">
@@ -112,21 +133,6 @@ export function PlayerBar() {
       </div>
       <div className="player__volume">
         <QualityMenu />
-        <Tip
-          label="歌词"
-          id="lyrics"
-          render={
-            <button
-              className="icon-btn"
-              aria-label="歌词"
-              aria-pressed={lyricsOpen}
-              disabled={disabled}
-              onClick={onToggleLyrics}
-            />
-          }
-        >
-          <MicrophoneStageIcon size={18} />
-        </Tip>
         <QueuePanel />
         <Tip
           label={muted ? "取消静音" : "静音"}

@@ -63,7 +63,7 @@ export function Titlebar() {
   return (
     <header
       data-tauri-drag-region
-      className="relative z-10 col-span-full row-start-1 grid grid-cols-subgrid items-center text-muted-foreground"
+      className="relative z-10 col-span-full row-start-1 -mt-(--gutter) grid h-(--titlebar) grid-cols-subgrid items-center self-start text-muted-foreground"
     >
       <div data-tauri-drag-region className="flex h-full items-center gap-1 pl-24">
         <NavButton label="后退" id="back" disabled={!canBack} onClick={() => history.back()}>

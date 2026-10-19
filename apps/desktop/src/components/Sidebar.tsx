@@ -1,10 +1,10 @@
 import {
   Sidebar as SidebarRoot,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupAction,
   SidebarGroupLabel,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -15,6 +15,7 @@ import { CalendarBlankIcon, HeartIcon, PlusIcon } from "@phosphor-icons/react";
 import type { PlaylistSummary } from "../api";
 import { cover } from "../format";
 import { useLibrary } from "../library";
+import { DAILY_ORIGIN, playlistOrigin, usePlayer } from "../player";
 import { Account } from "./Account";
 import { PlaylistContextMenu } from "./playlist/actions";
 import { openPlaylistDialog } from "./playlist/dialogs";
@@ -26,19 +27,25 @@ const item =
 // Glyph slot the same size as a playlist cover, so labels line up. No resting fill: a chip would melt into the hover row.
 const glyph = "grid size-7 shrink-0 place-items-center";
 
+// Marks the list the queue came from, with the same bars as the playing row. They grey out on pause.
+function Playing({ origin }: { origin: string }) {
+  const here = usePlayer((s) => s.origin === origin);
+  const playing = usePlayer((s) => s.playing);
+  if (!here) return null;
+  return <span className="eq ml-auto shrink-0" data-playing={playing} role="img" aria-label="正在播放" />;
+}
+
 export function Sidebar() {
   const me = useLibrary((s) => s.me);
+  const likedId = me?.playlists.find((p) => p.liked)?.id;
 
   // "我喜欢的音乐" is the library, a different layer from playlists, so it sits with the daily mix.
   const mine = me?.playlists.filter((p) => p.mine && !p.liked) ?? [];
   const saved = me?.playlists.filter((p) => !p.mine) ?? [];
 
   return (
-    <SidebarRoot collapsible="none" className="col-start-1 row-span-2 row-start-1 pt-(--titlebar)">
-      <SidebarHeader className="px-5 pt-2 pb-4">
-        <Account />
-      </SidebarHeader>
-      <SidebarContent className="gap-4 px-1 pb-4">
+    <SidebarRoot collapsible="none" className="col-start-1 row-start-1 overflow-hidden rounded-xl border pt-[calc(var(--titlebar)-var(--gutter))]">
+      <SidebarContent className="gap-4 px-1 pt-2 pb-4">
         <SidebarGroup>
           <SidebarMenu className="gap-1">
             <SidebarMenuItem>
@@ -51,6 +58,7 @@ export function Sidebar() {
                   </span>
                 </span>
                 <span>每日推荐</span>
+                <Playing origin={DAILY_ORIGIN} />
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
@@ -59,6 +67,7 @@ export function Sidebar() {
                   <HeartIcon weight="fill" className="size-5!" />
                 </span>
                 <span>我喜欢的音乐</span>
+                {likedId && <Playing origin={playlistOrigin(likedId)} />}
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -79,6 +88,10 @@ export function Sidebar() {
         />
         {saved.length > 0 && <PlaylistGroup title="收藏的歌单" items={saved} />}
       </SidebarContent>
+      {/* As tall as the player bar beside it, so the two top borders meet in one line. */}
+      <SidebarFooter className="h-22 justify-center border-t px-5">
+        <Account />
+      </SidebarFooter>
     </SidebarRoot>
   );
 }
@@ -95,6 +108,7 @@ function PlaylistGroup({ title, items, action }: { title: string; items: Playlis
               <SidebarMenuButton className={item} render={<Link to="/playlist/$id" params={{ id: p.id }} />}>
                 <img className="size-7 shrink-0 rounded-md" src={cover(p.cover, 28)} alt="" />
                 <span>{p.name}</span>
+                <Playing origin={playlistOrigin(p.id)} />
               </SidebarMenuButton>
             </PlaylistContextMenu>
           </SidebarMenuItem>

@@ -9,6 +9,7 @@ import { Notice } from "../components/states";
 import { TrackTable } from "../components/TrackTable";
 import { cover } from "../format";
 import { library, useLibrary } from "../library";
+import { playlistOrigin } from "../player";
 
 // Reads the playlist from the library, so mutations show up in place. The copy on screen (opened, or
 // the persisted one on a cold start) paints at once and is revalidated on every mount; a refetch
@@ -35,6 +36,7 @@ export function PlaylistView({ id }: { id: number }) {
         title={data.name}
         meta={`${data.creator} · ${data.tracks.length} 首`}
         tracks={data.tracks}
+        origin={playlistOrigin(data.id)}
       >
         <PlaylistMoreMenu playlist={data} />
       </Hero>
@@ -67,6 +69,7 @@ function LikedList({ id }: { id: number }) {
         title="我喜欢的音乐"
         meta={`${data.tracks.length} 首`}
         tracks={data.tracks}
+        origin={playlistOrigin(id)}
       />
       <TrackTable tracks={data.tracks} playlist={data} />
     </>

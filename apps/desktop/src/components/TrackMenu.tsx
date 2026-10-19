@@ -49,9 +49,10 @@ export type TrackContext = {
   index: number;
   // The playlist the rows belong to, when the table shows one.
   playlist?: PlaylistSummary;
+  origin?: string;
 };
 
-export function useTrackActions({ tracks, index, playlist }: TrackContext): TrackAction[] {
+export function useTrackActions({ tracks, index, playlist, origin }: TrackContext): TrackAction[] {
   const track = tracks[index];
   const liked = useLibrary((s) => s.liked.has(track.id));
   const me = useLibrary((s) => s.me);
@@ -67,7 +68,7 @@ export function useTrackActions({ tracks, index, playlist }: TrackContext): Trac
     ...(track.unavailable
       ? []
       : ([
-          { kind: "item", label: "播放", icon: PlayIcon, onSelect: () => player.playQueue(tracks, index) },
+          { kind: "item", label: "播放", icon: PlayIcon, onSelect: () => player.playQueue(tracks, index, origin) },
           { kind: "item", label: "下一首播放", icon: QueueIcon, onSelect: () => player.playNext(track) },
         ] satisfies TrackAction[])),
     {

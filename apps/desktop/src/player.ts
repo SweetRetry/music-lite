@@ -7,6 +7,8 @@ import { artistNames, cover } from "./format";
 export type PlayerState = {
   queue: Track[];
   index: number;
+  // The list the queue was started from (see playlistOrigin), or null for an album, a search, a lone song.
+  origin: string | null;
   playing: boolean;
   loading: boolean;
   position: number;
@@ -40,18 +42,19 @@ const savedQuality = (() => {
 
 // The queue, the song and where it was are remembered, so the next launch opens where this one left off,
 // paused. The element stays empty until the first play asks for the song's URL.
-type Session = { queue: Track[]; index: number; position: number };
+type Session = { queue: Track[]; index: number; origin: string | null; position: number };
 
 const saved = ((): Session => {
   try {
     const s = JSON.parse(localStorage.getItem("session") ?? "null");
     if (Array.isArray(s?.queue) && s.queue[s.index]) return { ...s, position: Number(localStorage.getItem("position")) || 0 };
   } catch {}
-  return { queue: [], index: -1, position: 0 };
+  return { queue: [], index: -1, origin: null, position: 0 };
 })();
 
 export const usePlayer = create<PlayerState>(() => ({
   ...saved,
+  origin: saved.origin ?? null,
   playing: false,
   loading: false,
   duration: (saved.queue[saved.index]?.durationMs ?? 0) / 1000,
@@ -130,15 +133,18 @@ function updateMediaSession(t: Track) {
   });
 }
 
+export const playlistOrigin = (id: number) => `playlist:${id}`;
+export const DAILY_ORIGIN = "daily";
+
 export const player = {
   // Smooth to the frame; timeupdate only fires about 4 times a second.
   time: () => (empty() ? state().position : smoothTime()),
   // Songs that were taken down stay out of the queue. Asking for one directly says why nothing plays.
-  playQueue(queue: Track[], index: number) {
+  playQueue(queue: Track[], index: number, origin: string | null = null) {
     const target = queue[index];
     if (target?.unavailable) return set({ notice: `「${target.name}」已下架，无法播放` });
     const playable = queue.filter((t) => !t.unavailable);
-    set({ queue: playable });
+    set({ queue: playable, origin });
     return load(playable.indexOf(target));
   },
   toggle() {
@@ -173,7 +179,7 @@ export const player = {
     audio.removeAttribute("src");
     audio.load();
     if ("mediaSession" in navigator) navigator.mediaSession.metadata = null;
-    set({ queue: [], index: -1, playing: false, loading: false, position: 0, duration: 0, notice: "", source: null });
+    set({ queue: [], index: -1, origin: null, playing: false, loading: false, position: 0, duration: 0, notice: "", source: null });
   },
   // Insert right after the current song. A copy elsewhere in the queue moves instead of doubling up.
   playNext(track: Track) {
@@ -237,9 +243,9 @@ function savePosition(seconds: number) {
 }
 
 usePlayer.subscribe((s, prev) => {
-  if (s.queue === prev.queue && s.index === prev.index) return;
+  if (s.queue === prev.queue && s.index === prev.index && s.origin === prev.origin) return;
   try {
-    localStorage.setItem("session", JSON.stringify({ queue: s.queue, index: s.index }));
+    localStorage.setItem("session", JSON.stringify({ queue: s.queue, index: s.index, origin: s.origin }));
   } catch {}
 });
 

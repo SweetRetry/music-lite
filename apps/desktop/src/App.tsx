@@ -9,6 +9,7 @@ import { Sidebar } from "./components/Sidebar";
 import { Fatal } from "./components/states";
 import { Titlebar } from "./components/Titlebar";
 import { useLibrary } from "./library";
+import { usePlayer } from "./player";
 import { useShortcuts } from "./shortcuts";
 import { useTheme } from "./theme";
 import { useUi } from "./ui";
@@ -20,6 +21,7 @@ export function Shell() {
   const signedOut = useLibrary((s) => s.signedOut);
   const lyricsOpen = useUi((s) => s.lyricsOpen);
   const theme = useTheme((s) => s.theme);
+  const hasTrack = usePlayer((s) => s.index >= 0);
 
   useEffect(() => {
     useLibrary.getState().load();
@@ -36,12 +38,14 @@ export function Shell() {
       <div className="shell">
         <Titlebar />
         <Sidebar />
-        {lyricsOpen ? (
+        {lyricsOpen && hasTrack ? (
           <LyricsView />
         ) : (
-          <main className="main">
-            <Outlet />
-          </main>
+          <div className="stage">
+            <main className="main">
+              <Outlet />
+            </main>
+          </div>
         )}
         <PlayerBar />
       </div>

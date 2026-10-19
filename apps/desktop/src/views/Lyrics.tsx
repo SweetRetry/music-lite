@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@ncm-lite/ui/components/ui/button";
+import { CaretDownIcon } from "@phosphor-icons/react";
 import { Skeleton } from "@ncm-lite/ui/components/ui/skeleton";
 import { lyric, type LyricLine } from "../api";
 import { peek, put } from "../cache";
 import { Notice } from "../components/states";
 import { artistNames, cover } from "../format";
+import { Tip } from "../components/ShortcutKeys";
 import { player, usePlayer } from "../player";
+import { useUi } from "../ui";
 
 // Lyrics never change once published, so a cached copy is final and is never refetched.
 const cacheKey = (id: number) => `lyric:${id}`;
@@ -103,10 +107,23 @@ export function LyricsView() {
     content.style.transform = `translateY(${-offset.current}px)`;
   };
 
-  if (!track) return <main className="main"><p className="state muted">还没有在播放的歌</p></main>;
+  if (!track) return null;
 
   return (
     <main className="lyrics">
+      {/* The cover, blown up and blurred, tints the page. It changes with the song. */}
+      <img className="lyrics__backdrop" src={cover(track.cover, 240)} alt="" aria-hidden />
+      {/* The title bar is not shown here, so this strip stays a drag region and holds the way out. */}
+      <div data-tauri-drag-region className="lyrics__top">
+        <Tip
+          label="收起歌词"
+          id="lyrics"
+          side="bottom"
+          render={<Button variant="ghost" size="icon-sm" aria-label="收起歌词" onClick={() => useUi.getState().toggleLyrics(false)} />}
+        >
+          <CaretDownIcon />
+        </Tip>
+      </div>
       <aside className="lyrics__meta">
         <img src={cover(track.cover, 240)} alt="" />
         <h1>{track.name}</h1>

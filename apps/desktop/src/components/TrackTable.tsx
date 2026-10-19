@@ -1,23 +1,36 @@
 import { Badge } from "@ncm-lite/ui/components/ui/badge";
 import { Button } from "@ncm-lite/ui/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ncm-lite/ui/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@ncm-lite/ui/components/ui/tooltip";
 import { Link } from "@tanstack/react-router";
-import { DotsThreeIcon, HeartIcon, PlayIcon } from "@phosphor-icons/react";
+import { CrosshairIcon, DotsThreeIcon, HeartIcon, PlayIcon } from "@phosphor-icons/react";
 import type { PlaylistSummary, Track } from "../api";
 import { cover, duration } from "../format";
 import { library, useLibrary } from "../library";
-import { player, usePlayer } from "../player";
+import { player, playlistOrigin, usePlayer } from "../player";
 import { Artists } from "./Artists";
 import { TrackContextMenu, TrackMoreMenu } from "./TrackMenu";
 
 // Row actions stay out of the way until the row is hovered or focused, so the list reads as names.
 const reveal = "opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100";
 
-export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: PlaylistSummary }) {
+export function TrackTable({
+  tracks,
+  playlist,
+  origin = playlist && playlistOrigin(playlist.id),
+}: {
+  tracks: Track[];
+  playlist?: PlaylistSummary;
+  origin?: string;
+}) {
   const current = usePlayer((s) => s.queue[s.index]?.id);
   const playing = usePlayer((s) => s.playing);
   const liked = useLibrary((s) => s.liked);
+  const hasCurrent = tracks.some((t) => t.id === current);
+  const locate = () =>
+    document.querySelector("tr[aria-current=true]")?.scrollIntoView({ block: "center", behavior: "smooth" });
   return (
+    <>
     <Table className="table-fixed">
       <TableHeader className="[&_tr]:border-0">
         <TableRow className="hover:bg-transparent">
@@ -34,7 +47,7 @@ export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: P
           const isCurrent = t.id === current;
           const isLiked = liked.has(t.id);
           return (
-            <TrackContextMenu key={`${t.id}-${i}`} tracks={tracks} index={i} playlist={playlist}>
+            <TrackContextMenu key={`${t.id}-${i}`} tracks={tracks} index={i} playlist={playlist} origin={origin}>
               <TableRow
                 tabIndex={0}
                 aria-current={isCurrent}
@@ -43,8 +56,8 @@ export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: P
                 // A taken-down song is greyed out like in the official client, and offers no play button.
                 data-unavailable={t.unavailable || undefined}
                 className="group border-0 data-unavailable:opacity-45 hover:bg-accent/60 focus-visible:-outline-offset-2 active:bg-accent [&>td:first-child]:rounded-l-lg [&>td:last-child]:rounded-r-lg"
-                onDoubleClick={() => player.playQueue(tracks, i)}
-                onKeyDown={(e) => e.key === "Enter" && e.target === e.currentTarget && player.playQueue(tracks, i)}
+                onDoubleClick={() => player.playQueue(tracks, i, origin)}
+                onKeyDown={(e) => e.key === "Enter" && e.target === e.currentTarget && player.playQueue(tracks, i, origin)}
               >
                 <TableCell className="py-2.5">
                   <div className="flex min-w-0 items-center gap-3">
@@ -58,7 +71,7 @@ export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: P
                         <button
                           aria-label={`播放 ${t.name}`}
                           className={`absolute inset-0 grid place-items-center rounded-md bg-background/60 text-foreground ${reveal}`}
-                          onClick={() => player.playQueue(tracks, i)}
+                          onClick={() => player.playQueue(tracks, i, origin)}
                           onDoubleClick={(e) => e.stopPropagation()}
                         >
                           <PlayIcon weight="fill" className="size-4 translate-x-px" />
@@ -135,5 +148,25 @@ export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: P
         })}
       </TableBody>
     </Table>
+    {/* Pinned to the corner of the window, above the player bar, so it stays put while the list scrolls. */}
+    {hasCurrent && (
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="secondary"
+              size="icon-lg"
+              aria-label="定位到正在播放"
+              className="fixed right-8 bottom-28 z-10 rounded-full shadow-md ring-1 ring-border"
+              onClick={locate}
+            />
+          }
+        >
+          <CrosshairIcon />
+        </TooltipTrigger>
+        <TooltipContent side="left">定位到正在播放</TooltipContent>
+      </Tooltip>
+    )}
+    </>
   );
 }
