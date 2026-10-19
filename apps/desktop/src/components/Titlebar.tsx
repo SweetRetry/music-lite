@@ -15,7 +15,7 @@ import { useCanGoBack, useRouter } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { type Theme, useTheme } from "../theme";
-import { Account } from "./Account";
+import { SearchBox } from "./SearchBox";
 
 const themes: { value: Theme; label: string }[] = [
   { value: "system", label: "跟随系统" },
@@ -73,36 +73,43 @@ export function Titlebar() {
   const { theme, setTheme } = useTheme();
   const Icon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
 
+  // Subgrid over the shell's two columns: history sits over the sidebar, search centres over the content.
+  // Drag regions do not inherit, so every empty container carries the attribute.
   return (
     <header
       data-tauri-drag-region
-      className="relative z-10 col-span-full row-start-1 flex items-center gap-1 pr-4 pl-24 text-muted-foreground"
+      className="relative z-10 col-span-full row-start-1 grid grid-cols-subgrid items-center text-muted-foreground"
     >
-      <NavButton label="后退" disabled={!canBack} onClick={() => history.back()}>
-        <ChevronLeft />
-      </NavButton>
-      <NavButton label="前进" disabled={!canForward} onClick={() => history.forward()}>
-        <ChevronRight />
-      </NavButton>
-      <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className="ml-auto" aria-label="外观" />}>
-          <Icon />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-36">
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>外观</DropdownMenuLabel>
-            <DropdownMenuRadioGroup value={theme} onValueChange={(v) => setTheme(v as Theme)}>
-              {themes.map((t) => (
-                <DropdownMenuRadioItem key={t.value} value={t.value}>
-                  {t.label}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <div className="pl-2">
-        <Account />
+      <div data-tauri-drag-region className="flex h-full items-center gap-1 pl-24">
+        <NavButton label="后退" disabled={!canBack} onClick={() => history.back()}>
+          <ChevronLeft />
+        </NavButton>
+        <NavButton label="前进" disabled={!canForward} onClick={() => history.forward()}>
+          <ChevronRight />
+        </NavButton>
+      </div>
+      <div data-tauri-drag-region className="grid h-full grid-cols-[1fr_minmax(0,28rem)_1fr] items-center gap-4 px-12">
+        <div data-tauri-drag-region className="h-full" />
+        <SearchBox />
+        <div data-tauri-drag-region className="flex h-full items-center justify-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="外观" />}>
+              <Icon />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-36">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>外观</DropdownMenuLabel>
+                <DropdownMenuRadioGroup value={theme} onValueChange={(v) => setTheme(v as Theme)}>
+                  {themes.map((t) => (
+                    <DropdownMenuRadioItem key={t.value} value={t.value}>
+                      {t.label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   );

@@ -1,4 +1,3 @@
-import { Kbd } from "@ncm-lite/ui/components/ui/kbd";
 import {
   Sidebar as SidebarRoot,
   SidebarContent,
@@ -6,35 +5,25 @@ import {
   SidebarGroupAction,
   SidebarGroupLabel,
   SidebarHeader,
-  SidebarInput,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@ncm-lite/ui/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ncm-lite/ui/components/ui/tooltip";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { Heart, Plus, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Heart, Plus } from "lucide-react";
 import type { PlaylistSummary } from "../api";
 import { cover } from "../format";
 import { useLibrary } from "../library";
+import { Account } from "./Account";
 import { PlaylistContextMenu } from "./playlist/actions";
 import { openPlaylistDialog } from "./playlist/dialogs";
 
 // Links mark themselves aria-current="page"; the menu button takes its active look from that.
 const item = "h-10 gap-3 aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium";
 
-export function Sidebar({ searchRef }: { searchRef: React.RefObject<HTMLInputElement | null> }) {
+export function Sidebar() {
   const me = useLibrary((s) => s.me);
-  const navigate = useNavigate();
-  const [q, setQ] = useState("");
-
-  useEffect(() => {
-    const keyword = q.trim();
-    if (!keyword) return;
-    const t = setTimeout(() => navigate({ to: "/search", search: { q: keyword }, replace: true }), 350);
-    return () => clearTimeout(t);
-  }, [q]);
 
   // "我喜欢的音乐" is the library, a different layer from playlists, so it sits with the daily mix.
   const mine = me?.playlists.filter((p) => p.mine && !p.liked) ?? [];
@@ -42,23 +31,8 @@ export function Sidebar({ searchRef }: { searchRef: React.RefObject<HTMLInputEle
 
   return (
     <SidebarRoot collapsible="none" className="col-start-1 row-span-2 row-start-1 pt-(--titlebar)">
-      <SidebarHeader className="px-3 pb-2">
-        <div className="relative">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          <SidebarInput
-            ref={searchRef}
-            value={q}
-            placeholder="搜索歌曲"
-            aria-label="搜索歌曲"
-            className="h-9 pr-9 pl-9"
-            onChange={(e) => setQ(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && q.trim()) navigate({ to: "/search", search: { q: q.trim() } });
-              if (e.key === "Escape") e.currentTarget.blur();
-            }}
-          />
-          <Kbd className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2">/</Kbd>
-        </div>
+      <SidebarHeader className="px-5 pt-2 pb-4">
+        <Account />
       </SidebarHeader>
       <SidebarContent className="gap-4 px-1 pb-4">
         <SidebarGroup>

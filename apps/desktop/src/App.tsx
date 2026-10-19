@@ -1,9 +1,10 @@
 import { SidebarProvider } from "@ncm-lite/ui/components/ui/sidebar";
 import { Toaster } from "@ncm-lite/ui/components/ui/sonner";
 import { Outlet } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { PlayerBar } from "./components/PlayerBar";
 import { PlaylistDialogs } from "./components/playlist/dialogs";
+import { focusSearch } from "./components/SearchBox";
 import { Sidebar } from "./components/Sidebar";
 import { Fatal } from "./components/states";
 import { Titlebar } from "./components/Titlebar";
@@ -16,14 +17,13 @@ import { LyricsView } from "./views/Lyrics";
 export function Shell() {
   const error = useLibrary((s) => s.error);
   const { lyricsOpen, toggleLyrics } = useUi();
-  const searchRef = useRef<HTMLInputElement>(null);
   const theme = useTheme((s) => s.theme);
 
   useEffect(() => {
     useLibrary.getState().load();
   }, []);
 
-  usePlayerShortcuts(useCallback(() => searchRef.current?.focus(), []));
+  usePlayerShortcuts(focusSearch);
 
   useEffect(() => {
     if (!lyricsOpen) return;
@@ -39,7 +39,7 @@ export function Shell() {
     <SidebarProvider className="contents">
       <div className="shell">
         <Titlebar />
-        <Sidebar searchRef={searchRef} />
+        <Sidebar />
         {lyricsOpen ? (
           <LyricsView />
         ) : (

@@ -24,11 +24,11 @@ export function Account() {
   if (!me) return null;
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <Avatar size="sm">
+      <Avatar className="size-7">
         <AvatarImage src={cover(me.avatar, 24)} alt="" />
         <AvatarFallback>{me.nickname.slice(0, 1)}</AvatarFallback>
       </Avatar>
-      <span className="max-w-40 truncate text-sm text-foreground">{me.nickname}</span>
+      <span className="truncate text-sm font-medium text-foreground">{me.nickname}</span>
       {vip && (
         <Tooltip>
           <TooltipTrigger render={<Badge variant="secondary" className="shrink-0" />}>{vip.name}</TooltipTrigger>
