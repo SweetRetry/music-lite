@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { PlayerBar } from "./components/PlayerBar";
 import { Sidebar } from "./components/Sidebar";
 import { Fatal } from "./components/states";
+import { Titlebar } from "./components/Titlebar";
 import { useLibrary } from "./library";
 import { usePlayerShortcuts } from "./player";
 import { useUi } from "./ui";
@@ -30,6 +31,7 @@ export function Shell() {
 
   return (
     <div className="shell">
+      <Titlebar />
       <Sidebar searchRef={searchRef} />
       {lyricsOpen ? (
         <LyricsView />

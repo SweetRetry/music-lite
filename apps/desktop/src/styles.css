@@ -37,10 +37,13 @@ a {
   text-underline-offset: 2px;
 }
 
-button {
-  border: 0;
-  background: none;
-  cursor: pointer;
+/* In the base layer so Tailwind utilities (shadcn buttons) can override it. */
+@layer base {
+  button {
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
 }
 
 :focus-visible {
@@ -65,11 +68,24 @@ img {
 
 /* Shell */
 
+/* Row 1 is the title bar across the top. The sidebar runs up behind it so the left column is one surface. */
 .shell {
+  --titlebar: 44px;
   display: grid;
   grid-template-columns: 216px 1fr;
-  grid-template-rows: 1fr 72px;
+  grid-template-rows: var(--titlebar) 1fr 72px;
   height: 100%;
+}
+
+.shell > .sidebar {
+  grid-row: 1 / 3;
+  padding-top: var(--titlebar);
+}
+
+.shell > .main,
+.shell > .lyrics {
+  grid-column: 2;
+  grid-row: 2;
 }
 
 .main {
