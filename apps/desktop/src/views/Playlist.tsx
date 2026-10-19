@@ -1,13 +1,28 @@
+import { useEffect, useRef, useState } from "react";
 import { Hero } from "../components/Hero";
-import { Loading, Notice, useLoad } from "../components/states";
+import { PlaylistMoreMenu } from "../components/playlist/actions";
+import { Loading, Notice } from "../components/states";
 import { TrackTable } from "../components/TrackTable";
 import { cover } from "../format";
 import { Icon } from "../icons";
 import { library, useLibrary } from "../library";
 
+// Reads the playlist from the library, so mutations show up in place. When a mutation drops the
+// cached copy, it is fetched again while the last copy stays on screen.
+function useOpenedPlaylist(id: number) {
+  const cached = useLibrary((s) => s.opened[id]);
+  const last = useRef(cached);
+  if (cached) last.current = cached;
+  const [error, setError] = useState("");
+  useEffect(() => {
+    if (!cached) library.playlist(id).catch((e) => setError(e.message));
+  }, [id, cached]);
+  return { data: last.current, error };
+}
+
 export function PlaylistView({ id }: { id: number }) {
-  const { data, error } = useLoad(() => library.playlist(id));
-  if (error) return <Notice message={`歌单没加载出来。${error}`} />;
+  const { data, error } = useOpenedPlaylist(id);
+  if (error && !data) return <Notice message={`歌单没加载出来。${error}`} />;
   if (!data) return <Loading />;
   return (
     <>
@@ -16,7 +31,9 @@ export function PlaylistView({ id }: { id: number }) {
         title={data.name}
         meta={`${data.creator} · ${data.tracks.length} 首`}
         tracks={data.tracks}
-      />
+      >
+        <PlaylistMoreMenu playlist={data} />
+      </Hero>
       <TrackTable tracks={data.tracks} playlist={data} />
     </>
   );
@@ -32,8 +49,8 @@ export function LikedView() {
 }
 
 function LikedList({ id }: { id: number }) {
-  const { data, error } = useLoad(() => library.playlist(id));
-  if (error) return <Notice message={`喜欢的音乐没加载出来。${error}`} />;
+  const { data, error } = useOpenedPlaylist(id);
+  if (error && !data) return <Notice message={`喜欢的音乐没加载出来。${error}`} />;
   if (!data) return <Loading />;
   return (
     <>

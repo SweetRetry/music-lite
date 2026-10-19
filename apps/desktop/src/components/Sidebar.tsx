@@ -1,10 +1,15 @@
+import { Button } from "@ncm-lite/ui/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@ncm-lite/ui/components/ui/tooltip";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { PlaylistSummary } from "../api";
 import { cover } from "../format";
 import { Icon } from "../icons";
 import { useLibrary } from "../library";
 import { Account } from "./Account";
+import { PlaylistContextMenu } from "./playlist/actions";
+import { openPlaylistDialog, PlaylistDialogs } from "./playlist/dialogs";
 
 export function Sidebar({ searchRef }: { searchRef: React.RefObject<HTMLInputElement | null> }) {
   const me = useLibrary((s) => s.me);
@@ -49,23 +54,57 @@ export function Sidebar({ searchRef }: { searchRef: React.RefObject<HTMLInputEle
           </span>
           <span>我喜欢的音乐</span>
         </Link>
-        <PlaylistGroup title="创建的歌单" items={mine} />
+        <PlaylistGroup
+          title="创建的歌单"
+          items={mine}
+          action={
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    aria-label="新建歌单"
+                    onClick={() => openPlaylistDialog({ kind: "create" })}
+                  />
+                }
+              >
+                <Plus />
+              </TooltipTrigger>
+              <TooltipContent>新建歌单</TooltipContent>
+            </Tooltip>
+          }
+        />
         {saved.length > 0 && <PlaylistGroup title="收藏的歌单" items={saved} />}
+        <PlaylistDialogs />
       </div>
       <Account />
     </nav>
   );
 }
 
-function PlaylistGroup({ title, items }: { title: string; items: PlaylistSummary[] }) {
+function PlaylistGroup({
+  title,
+  items,
+  action,
+}: {
+  title: string;
+  items: PlaylistSummary[];
+  action?: React.ReactNode;
+}) {
   return (
     <section className="group">
-      <h2 className="group__title">{title}</h2>
+      <div className="flex items-center justify-between pr-1">
+        <h2 className="group__title">{title}</h2>
+        {action}
+      </div>
       {items.map((p) => (
-        <Link key={p.id} className="sidebar__item" to="/playlist/$id" params={{ id: p.id }}>
-          <img src={cover(p.cover, 24)} alt="" />
-          <span>{p.name}</span>
-        </Link>
+        <PlaylistContextMenu key={p.id} playlist={p}>
+          <Link className="sidebar__item" to="/playlist/$id" params={{ id: p.id }}>
+            <img src={cover(p.cover, 24)} alt="" />
+            <span>{p.name}</span>
+          </Link>
+        </PlaylistContextMenu>
       ))}
     </section>
   );
