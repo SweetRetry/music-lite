@@ -1,5 +1,16 @@
+import {
+  HeartIcon,
+  MicrophoneStageIcon,
+  PauseIcon,
+  PlayIcon,
+  SkipBackIcon,
+  SkipForwardIcon,
+  SpeakerHighIcon,
+  SpeakerLowIcon,
+  SpeakerXIcon,
+} from "@phosphor-icons/react";
+import { useRef } from "react";
 import { duration, cover } from "../format";
-import { Icon } from "../icons";
 import { library, useLibrary } from "../library";
 import { player, usePlayer } from "../player";
 import { useUi } from "../ui";
@@ -16,6 +27,15 @@ export function PlayerBar() {
   const onToggleLyrics = () => toggleLyrics();
   const track = s.queue[s.index];
   const disabled = !track;
+  // Unmuting restores the level from before the mute.
+  const lastVolume = useRef(s.volume || 0.8);
+  const muted = s.volume === 0;
+  const Speaker = muted ? SpeakerXIcon : s.volume < 0.5 ? SpeakerLowIcon : SpeakerHighIcon;
+  const toggleMute = () => {
+    if (muted) return player.setVolume(lastVolume.current);
+    lastVolume.current = s.volume;
+    player.setVolume(0);
+  };
   return (
     <footer className="player">
       <div className="player__track">
@@ -33,14 +53,14 @@ export function PlayerBar() {
               id="like"
               render={
                 <button
-                  className="icon-btn like"
+                  className="icon-btn"
                   aria-label={liked.has(track.id) ? "取消喜欢" : "喜欢"}
                   aria-pressed={liked.has(track.id)}
                   onClick={() => library.toggleLike(track.id)}
                 />
               }
             >
-              <Icon name="heart" filled={liked.has(track.id)} />
+              <HeartIcon size={18} weight={liked.has(track.id) ? "fill" : "regular"} />
             </Tip>
           </>
         ) : (
@@ -54,7 +74,7 @@ export function PlayerBar() {
             id="prev"
             render={<button className="icon-btn" aria-label="上一首" disabled={disabled} onClick={player.prev} />}
           >
-            <Icon name="prev" />
+            <SkipBackIcon size={18} weight="fill" />
           </Tip>
           <Tip
             label={s.playing ? "暂停" : "播放"}
@@ -68,14 +88,14 @@ export function PlayerBar() {
               />
             }
           >
-            <Icon name={s.playing ? "pause" : "play"} />
+            {s.playing ? <PauseIcon size={18} weight="fill" /> : <PlayIcon size={18} weight="fill" className="translate-x-px" />}
           </Tip>
           <Tip
             label="下一首"
             id="next"
             render={<button className="icon-btn" aria-label="下一首" disabled={disabled} onClick={player.next} />}
           >
-            <Icon name="next" />
+            <SkipForwardIcon size={18} weight="fill" />
           </Tip>
         </div>
         <div className="player__progress">
@@ -105,10 +125,15 @@ export function PlayerBar() {
             />
           }
         >
-          <Icon name="lyrics" />
+          <MicrophoneStageIcon size={18} />
         </Tip>
         <QueuePanel />
-        <Icon name="volume" />
+        <Tip
+          label={muted ? "取消静音" : "静音"}
+          render={<button className="icon-btn" aria-label={muted ? "取消静音" : "静音"} onClick={toggleMute} />}
+        >
+          <Speaker size={18} />
+        </Tip>
         <Range value={s.volume} max={1} step={0.01} label="音量" onChange={player.setVolume} />
       </div>
     </footer>

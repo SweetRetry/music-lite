@@ -8,6 +8,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogMedia,
   AlertDialogTitle,
 } from "@ncm-lite/ui/components/ui/alert-dialog";
 import { Button } from "@ncm-lite/ui/components/ui/button";
@@ -29,6 +30,7 @@ import {
 } from "@ncm-lite/ui/components/ui/field";
 import { Input } from "@ncm-lite/ui/components/ui/input";
 import { Switch } from "@ncm-lite/ui/components/ui/switch";
+import { TrashIcon } from "@phosphor-icons/react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -171,6 +173,9 @@ function DeleteDialog({ request }: { request: Extract<Request, { kind: "delete" 
     <AlertDialog open={!!request} onOpenChange={(o) => !o && close()}>
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
+          <AlertDialogMedia className="bg-destructive/10 text-destructive">
+            <TrashIcon />
+          </AlertDialogMedia>
           <AlertDialogTitle>删除歌单</AlertDialogTitle>
           <AlertDialogDescription>确定删除「{playlist?.name}」吗？删除后无法恢复。</AlertDialogDescription>
         </AlertDialogHeader>

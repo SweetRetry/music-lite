@@ -2,16 +2,17 @@ import { album } from "../api/album";
 import { Artists } from "../components/Artists";
 import { Description } from "../components/album/Description";
 import { Hero } from "../components/Hero";
-import { Loading, Notice, useLoad } from "../components/states";
+import { PageSkeleton } from "../components/skeletons";
+import { Notice, useCached } from "../components/states";
 import { TrackTable } from "../components/TrackTable";
 import { cover } from "../format";
 
 const date = (ms: number) => (ms > 0 ? new Date(ms).toLocaleDateString("zh-CN").replaceAll("/", "-") : "");
 
 export function AlbumView({ id }: { id: number }) {
-  const { data, error } = useLoad(() => album(id));
+  const { data, error } = useCached(`album:${id}`, () => album(id));
   if (error) return <Notice message={`专辑没加载出来。${error}`} />;
-  if (!data) return <Loading />;
+  if (!data) return <PageSkeleton art="square" />;
   const rest = [date(data.publishTime), `${data.trackCount} 首`].filter(Boolean).join(" · ");
   return (
     <>

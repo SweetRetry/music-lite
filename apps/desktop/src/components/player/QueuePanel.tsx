@@ -2,7 +2,7 @@
 import { Button } from "@ncm-lite/ui/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@ncm-lite/ui/components/ui/popover";
 import { ScrollArea } from "@ncm-lite/ui/components/ui/scroll-area";
-import { ListMusic, X } from "lucide-react";
+import { QueueIcon, XIcon } from "@phosphor-icons/react";
 import { artistNames, cover, duration } from "../../format";
 import { player, usePlayer } from "../../player";
 import { useUi } from "../../ui";
@@ -27,7 +27,7 @@ export function QueuePanel() {
           />
         }
       >
-        <ListMusic className="size-4" />
+        <QueueIcon size={18} />
       </Tip>
       <PopoverContent side="top" align="end" sideOffset={12} className="w-96 gap-0 p-0">
         <div className="flex h-11 items-center justify-between px-4">
@@ -45,7 +45,7 @@ export function QueuePanel() {
                   <li
                     key={`${t.id}-${i}`}
                     ref={current ? (el) => el?.scrollIntoView({ block: "center" }) : undefined}
-                    className={`flex items-center gap-1 rounded-md pr-1 hover:bg-muted ${current ? "bg-muted" : ""}`}
+                    className="flex items-center gap-1 rounded-md pr-1 hover:bg-accent/60 has-[button:active]:bg-accent"
                   >
                     <button
                       className="flex h-[50px] min-w-0 flex-1 items-center gap-2.5 px-2 text-left"
@@ -65,7 +65,7 @@ export function QueuePanel() {
                       aria-label={`从队列移除 ${t.name}`}
                       onClick={() => player.remove(i)}
                     >
-                      <X className="size-4" />
+                      <XIcon />
                     </Button>
                   </li>
                 );

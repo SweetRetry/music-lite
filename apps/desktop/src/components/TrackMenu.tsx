@@ -20,6 +20,18 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@ncm-lite/ui/components/ui/dropdown-menu";
+import {
+  HeartBreakIcon,
+  HeartIcon,
+  type Icon,
+  ListPlusIcon,
+  PlayIcon,
+  PlusIcon,
+  QueueIcon,
+  TrashIcon,
+  UserIcon,
+  VinylRecordIcon,
+} from "@phosphor-icons/react";
 import { useNavigate } from "@tanstack/react-router";
 import type { PlaylistSummary, Track } from "../api";
 import { toast } from "sonner";
@@ -28,8 +40,8 @@ import { player } from "../player";
 import { failed, openPlaylistDialog } from "./playlist/dialogs";
 
 export type TrackAction =
-  | { kind: "item"; label: string; onSelect: () => void }
-  | { kind: "sub"; label: string; items: TrackAction[] }
+  | { kind: "item"; label: string; icon?: Icon; onSelect: () => void }
+  | { kind: "sub"; label: string; icon: Icon; items: TrackAction[] }
   | { kind: "separator" };
 
 export type TrackContext = {
@@ -52,16 +64,23 @@ export function useTrackActions({ tracks, index, playlist }: TrackContext): Trac
       (e) => failed("没能添加到歌单", e),
     );
   return [
-    { kind: "item", label: "播放", onSelect: () => player.playQueue(tracks, index) },
-    { kind: "item", label: "下一首播放", onSelect: () => player.playNext(track) },
-    { kind: "item", label: liked ? "取消喜欢" : "喜欢", onSelect: () => library.toggleLike(track.id) },
+    { kind: "item", label: "播放", icon: PlayIcon, onSelect: () => player.playQueue(tracks, index) },
+    { kind: "item", label: "下一首播放", icon: QueueIcon, onSelect: () => player.playNext(track) },
+    {
+      kind: "item",
+      label: liked ? "取消喜欢" : "喜欢",
+      icon: liked ? HeartBreakIcon : HeartIcon,
+      onSelect: () => library.toggleLike(track.id),
+    },
     {
       kind: "sub",
       label: "添加到歌单",
+      icon: ListPlusIcon,
       items: [
         {
           kind: "item",
           label: "新建歌单",
+          icon: PlusIcon,
           onSelect: () => openPlaylistDialog({ kind: "create", onCreated: addTo }),
         },
         ...(targets.length ? [{ kind: "separator" } satisfies TrackAction] : []),
@@ -73,6 +92,7 @@ export function useTrackActions({ tracks, index, playlist }: TrackContext): Trac
           {
             kind: "item",
             label: "从歌单中删除",
+            icon: TrashIcon,
             onSelect: () =>
               library.removeTracks(playlist.id, [track.id]).catch((e) => failed("没能从歌单中删除，已放回", e)),
           } satisfies TrackAction,
@@ -84,6 +104,7 @@ export function useTrackActions({ tracks, index, playlist }: TrackContext): Trac
       .map((a): TrackAction => ({
         kind: "item",
         label: `歌手：${a.name}`,
+        icon: UserIcon,
         onSelect: () => navigate({ to: "/artist/$id", params: { id: a.id } }),
       })),
     ...(track.album.id
@@ -91,6 +112,7 @@ export function useTrackActions({ tracks, index, playlist }: TrackContext): Trac
           {
             kind: "item",
             label: `专辑：${track.album.name}`,
+            icon: VinylRecordIcon,
             onSelect: () => navigate({ to: "/album/$id", params: { id: track.album.id } }),
           } satisfies TrackAction,
         ]
@@ -104,13 +126,17 @@ function ContextItems({ actions }: { actions: TrackAction[] }) {
       <ContextMenuSeparator key={i} />
     ) : a.kind === "sub" ? (
       <ContextMenuSub key={i}>
-        <ContextMenuSubTrigger>{a.label}</ContextMenuSubTrigger>
+        <ContextMenuSubTrigger>
+          <a.icon />
+          {a.label}
+        </ContextMenuSubTrigger>
         <ContextMenuSubContent>
           <ContextItems actions={a.items} />
         </ContextMenuSubContent>
       </ContextMenuSub>
     ) : (
       <ContextMenuItem key={i} onClick={a.onSelect}>
+        {a.icon && <a.icon />}
         {a.label}
       </ContextMenuItem>
     ),
@@ -123,13 +149,17 @@ function DropdownItems({ actions }: { actions: TrackAction[] }) {
       <DropdownMenuSeparator key={i} />
     ) : a.kind === "sub" ? (
       <DropdownMenuSub key={i}>
-        <DropdownMenuSubTrigger>{a.label}</DropdownMenuSubTrigger>
+        <DropdownMenuSubTrigger>
+          <a.icon />
+          {a.label}
+        </DropdownMenuSubTrigger>
         <DropdownMenuSubContent>
           <DropdownItems actions={a.items} />
         </DropdownMenuSubContent>
       </DropdownMenuSub>
     ) : (
       <DropdownMenuItem key={i} onClick={a.onSelect}>
+        {a.icon && <a.icon />}
         {a.label}
       </DropdownMenuItem>
     ),

@@ -1,18 +1,19 @@
 // The signed-in account: profile, playlists and liked songs. Shared by every view.
 import { create } from "zustand";
 import * as api from "./api";
+import { clear, drop, peek, put } from "./cache";
 import * as pl from "./api/playlists";
 
 type Library = {
   me: api.Me | null;
   liked: Set<number>;
   error: string;
-  // Opened playlists, so moving around does not refetch. Views read them from here, so a
+  // Opened playlists, seeded from the persistent cache. Views read them from here, so a
   // mutation that patches an entry updates the page in place.
   opened: Record<number, api.Playlist>;
   load: () => Promise<void>;
-  playlist: (id: number) => Promise<api.Playlist>;
-  invalidate: (id: number) => void;
+  // Fetches and replaces opened[id]; the old copy stays until the new one lands.
+  reload: (id: number) => Promise<api.Playlist>;
   likedPlaylist: () => api.PlaylistSummary | undefined;
   toggleLike: (id: number) => Promise<void>;
   createPlaylist: (name: string, isPrivate: boolean) => Promise<number>;
@@ -53,30 +54,44 @@ export const useLibrary = create<Library>((set, get) => {
     if (playlists) set((s) => (s.me ? { me: { ...s.me, playlists } } : {}));
   };
 
+  // Start from the persisted account so the sidebar and liked hearts paint on the first frame.
+  const cachedMe = peek<api.Me>("me");
+  const cachedOpened: Record<number, api.Playlist> = {};
+  for (const p of cachedMe?.playlists ?? []) {
+    const copy = peek<api.Playlist>(`playlist:${p.id}`);
+    if (copy) cachedOpened[p.id] = copy;
+  }
+
   return {
-    me: null,
-    liked: new Set(),
+    me: cachedMe ?? null,
+    liked: new Set(cachedMe?.liked),
     error: "",
-    opened: {},
+    opened: cachedOpened,
     async load() {
       try {
         const me = await api.me();
+        // Another account signed in since the last run: nothing cached for the old one may show.
+        const prev = get().me;
+        if (prev && prev.uid !== me.uid) {
+          clear();
+          set({ opened: {} });
+        }
         set({ me, liked: new Set(me.liked), error: "" });
       } catch (e) {
-        set({ error: (e as Error).message });
+        // With a cached account the app is usable offline, so only a cold failure is fatal.
+        if (!get().me) set({ error: (e as Error).message });
+        return;
       }
+      // Warm the liked list so the first click on 我喜欢的音乐 is instant.
+      const likedId = get().likedPlaylist()?.id;
+      if (likedId && !get().opened[likedId]) get().reload(likedId).catch(() => {});
     },
-    async playlist(id) {
-      const cached = get().opened[id];
-      if (cached) return cached;
-      const p = await api.playlist(id, get().me?.uid ?? 0);
-      set((s) => ({ opened: { ...s.opened, [id]: p } }));
-      return p;
-    },
-    invalidate: (id) =>
-      set((s) => {
-        const { [id]: _, ...opened } = s.opened;
-        return { opened };
+    // Queued behind pending writes to the same playlist, so a fetch never returns a copy older than them.
+    reload: (id) =>
+      serial(id, async () => {
+        const p = await api.playlist(id, get().me?.uid ?? 0);
+        set((s) => ({ opened: { ...s.opened, [id]: p } }));
+        return p;
       }),
     likedPlaylist: () => get().me?.playlists.find((p) => p.liked),
     async toggleLike(id) {
@@ -95,7 +110,7 @@ export const useLibrary = create<Library>((set, get) => {
       if (!ok) return apply(!next);
       // Refetch only after the server has the change, or an open liked list reloads the old one.
       const likedId = get().likedPlaylist()?.id;
-      if (likedId) get().invalidate(likedId);
+      if (likedId && get().opened[likedId]) get().reload(likedId).catch(() => {});
     },
 
     async createPlaylist(name, isPrivate) {
@@ -115,7 +130,11 @@ export const useLibrary = create<Library>((set, get) => {
     async deletePlaylist(id) {
       await pl.remove(id);
       set((s) => ({ me: s.me && { ...s.me, playlists: s.me.playlists.filter((p) => p.id !== id) } }));
-      get().invalidate(id);
+      set((s) => {
+        const { [id]: _, ...opened } = s.opened;
+        return { opened };
+      });
+      drop(`playlist:${id}`);
     },
     async subscribePlaylist(id, on) {
       await pl.subscribe(id, on);
@@ -129,16 +148,16 @@ export const useLibrary = create<Library>((set, get) => {
           tracks.map((t) => t.id),
         ),
       );
-      get().invalidate(pid);
+      if (get().opened[pid]) get().reload(pid).catch(() => {});
       refreshPlaylists();
     },
     // Optimistic: the rows go now and come back where they were if the server refuses.
     async removeTracks(pid, ids) {
-      const drop = new Set(ids);
+      const gone = new Set(ids);
       const removed: [number, api.Track][] = [];
       setTracks(pid, (tracks) =>
         tracks.filter((t, i) => {
-          if (!drop.has(t.id)) return true;
+          if (!gone.has(t.id)) return true;
           removed.push([i, t]);
           return false;
         }),
@@ -156,6 +175,14 @@ export const useLibrary = create<Library>((set, get) => {
       refreshPlaylists();
     },
   };
+});
+
+// Write-through: whatever the store holds is what the next launch starts from.
+useLibrary.subscribe((s, prev) => {
+  if (s.me && (s.me !== prev.me || s.liked !== prev.liked)) put("me", { ...s.me, liked: [...s.liked] });
+  if (s.opened !== prev.opened) {
+    for (const [id, p] of Object.entries(s.opened)) if (p !== prev.opened[+id]) put(`playlist:${id}`, p);
+  }
 });
 
 // Actions are stable, so non-React code and event handlers can call them without subscribing.

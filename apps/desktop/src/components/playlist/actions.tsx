@@ -13,21 +13,28 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@ncm-lite/ui/components/ui/dropdown-menu";
-import { Ellipsis } from "lucide-react";
+import {
+  DotsThreeIcon,
+  FolderSimpleMinusIcon,
+  FolderSimplePlusIcon,
+  type Icon,
+  PencilSimpleIcon,
+  TrashIcon,
+} from "@phosphor-icons/react";
 import { toast } from "sonner";
 import type { PlaylistSummary } from "../../api";
 import { editable, library, useLibrary } from "../../library";
 import { failed, openPlaylistDialog } from "./dialogs";
 
-type Action = { label: string; run: () => void; destructive?: boolean };
+type Action = { label: string; icon: Icon; run: () => void; destructive?: boolean };
 
 function usePlaylistActions(playlist: PlaylistSummary): Action[] {
   const me = useLibrary((s) => s.me);
   if (!me) return [];
   if (editable(me, playlist.id))
     return [
-      { label: "重命名", run: () => openPlaylistDialog({ kind: "rename", playlist }) },
-      { label: "删除歌单", run: () => openPlaylistDialog({ kind: "delete", playlist }), destructive: true },
+      { label: "重命名", icon: PencilSimpleIcon, run: () => openPlaylistDialog({ kind: "rename", playlist }) },
+      { label: "删除歌单", icon: TrashIcon, run: () => openPlaylistDialog({ kind: "delete", playlist }), destructive: true },
     ];
   const own = me.playlists.find((p) => p.id === playlist.id)?.mine ?? false;
   if (own) return [];
@@ -37,7 +44,11 @@ function usePlaylistActions(playlist: PlaylistSummary): Action[] {
       () => toast.success(on ? "已收藏" : "已取消收藏"),
       (e) => failed(on ? "没能收藏" : "没能取消收藏", e),
     );
-  return [collected ? { label: "取消收藏", run: () => toggle(false) } : { label: "收藏", run: () => toggle(true) }];
+  return [
+    collected
+      ? { label: "取消收藏", icon: FolderSimpleMinusIcon, run: () => toggle(false) }
+      : { label: "收藏", icon: FolderSimplePlusIcon, run: () => toggle(true) },
+  ];
 }
 
 export function PlaylistContextMenu({
@@ -55,6 +66,7 @@ export function PlaylistContextMenu({
       <ContextMenuContent>
         {actions.map((a) => (
           <ContextMenuItem key={a.label} variant={a.destructive ? "destructive" : "default"} onClick={a.run}>
+            <a.icon />
             {a.label}
           </ContextMenuItem>
         ))}
@@ -69,11 +81,12 @@ export function PlaylistMoreMenu({ playlist }: { playlist: PlaylistSummary }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button variant="outline" size="icon-lg" aria-label="更多" />}>
-        <Ellipsis />
+        <DotsThreeIcon weight="bold" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         {actions.map((a) => (
           <DropdownMenuItem key={a.label} variant={a.destructive ? "destructive" : "default"} onClick={a.run}>
+            <a.icon />
             {a.label}
           </DropdownMenuItem>
         ))}

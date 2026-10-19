@@ -2,7 +2,7 @@ import { Badge } from "@ncm-lite/ui/components/ui/badge";
 import { Button } from "@ncm-lite/ui/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ncm-lite/ui/components/ui/table";
 import { Link } from "@tanstack/react-router";
-import { Ellipsis, Heart, Play } from "lucide-react";
+import { DotsThreeIcon, HeartIcon, PlayIcon } from "@phosphor-icons/react";
 import type { PlaylistSummary, Track } from "../api";
 import { cover, duration } from "../format";
 import { library, useLibrary } from "../library";
@@ -38,7 +38,9 @@ export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: P
               <TableRow
                 tabIndex={0}
                 aria-current={isCurrent}
-                className="group border-0 hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:-outline-offset-2 aria-[current=true]:bg-muted [&>td:first-child]:rounded-l-lg [&>td:last-child]:rounded-r-lg"
+                // Hover fills, press fills more, focus rings, and the playing row is marked by red text
+                // and the eq bars instead of a fill, so the four never read alike.
+                className="group border-0 hover:bg-accent/60 focus-visible:-outline-offset-2 active:bg-accent [&>td:first-child]:rounded-l-lg [&>td:last-child]:rounded-r-lg"
                 onDoubleClick={() => player.playQueue(tracks, i)}
                 onKeyDown={(e) => e.key === "Enter" && e.target === e.currentTarget && player.playQueue(tracks, i)}
               >
@@ -57,13 +59,13 @@ export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: P
                           onClick={() => player.playQueue(tracks, i)}
                           onDoubleClick={(e) => e.stopPropagation()}
                         >
-                          <Play className="size-4 translate-x-px fill-current" />
+                          <PlayIcon weight="fill" className="size-4 translate-x-px" />
                         </button>
                       )}
                     </div>
                     <div className="flex min-w-0 flex-col gap-0.5">
                       <div className="flex min-w-0 items-center gap-2">
-                        <span className="truncate text-base text-foreground">{t.name}</span>
+                        <span className={`truncate text-base ${isCurrent ? "text-primary" : "text-foreground"}`}>{t.name}</span>
                         {t.vip && (
                           <Badge variant="outline" className="shrink-0 border-primary/60 text-primary">
                             VIP
@@ -85,11 +87,11 @@ export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: P
                       aria-label={isLiked ? "取消喜欢" : "喜欢"}
                       aria-pressed={isLiked}
                       className={
-                        isLiked ? "text-destructive hover:text-destructive" : `text-muted-foreground ${reveal}`
+                        isLiked ? "text-primary hover:text-primary" : `text-muted-foreground ${reveal}`
                       }
                       onClick={() => library.toggleLike(t.id)}
                     >
-                      <Heart className={isLiked ? "fill-current" : undefined} />
+                      <HeartIcon weight={isLiked ? "fill" : "regular"} />
                     </Button>
                     <TrackMoreMenu
                       tracks={tracks}
@@ -104,7 +106,7 @@ export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: P
                         />
                       }
                     >
-                      <Ellipsis />
+                      <DotsThreeIcon weight="bold" />
                     </TrackMoreMenu>
                   </div>
                 </TableCell>

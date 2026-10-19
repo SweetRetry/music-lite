@@ -3,7 +3,8 @@ import { artist } from "../api/artist";
 import { Description } from "../components/album/Description";
 import { AlbumGrid } from "../components/artist/AlbumGrid";
 import { Hero } from "../components/Hero";
-import { Loading, Notice, useLoad } from "../components/states";
+import { PageSkeleton } from "../components/skeletons";
+import { Notice, useCached } from "../components/states";
 import { TrackTable } from "../components/TrackTable";
 import { cover } from "../format";
 
@@ -12,9 +13,9 @@ const Heading = ({ children }: { children: React.ReactNode }) => (
 );
 
 export function ArtistView({ id }: { id: number }) {
-  const { data, error } = useLoad(() => artist(id));
+  const { data, error } = useCached(`artist:${id}`, () => artist(id));
   if (error) return <Notice message={`歌手没加载出来。${error}`} />;
-  if (!data) return <Loading />;
+  if (!data) return <PageSkeleton art="round" albums />;
   const meta = [data.alias, `${data.songCount} 首歌`, `${data.albumCount} 张专辑`].filter(Boolean).join(" · ");
   return (
     <>

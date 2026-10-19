@@ -1,5 +1,5 @@
 import { Button } from "@ncm-lite/ui/components/ui/button";
-import { Play } from "lucide-react";
+import { PlayIcon } from "@phosphor-icons/react";
 import type { Track } from "../api";
 import { player } from "../player";
 
@@ -27,7 +27,7 @@ export function Hero({
         </div>
         <div className="flex items-center gap-2">
           <Button size="lg" disabled={!tracks.length} onClick={() => player.playQueue(tracks, 0)}>
-            <Play className="fill-current" />
+            <PlayIcon weight="fill" />
             播放全部
           </Button>
           {children}

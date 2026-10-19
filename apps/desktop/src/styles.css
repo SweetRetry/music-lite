@@ -98,7 +98,7 @@ img {
   border-radius: 12px;
 }
 
-/* Now playing marker: three bars, the view's one emerald moment. */
+/* Now playing marker: three bars in the brand red, next to the red song name. */
 .eq {
   display: inline-block;
   width: 12px;
@@ -122,6 +122,7 @@ img {
   gap: 24px;
   padding: 0 16px;
   background: var(--card);
+  border-top: 1px solid var(--border);
   z-index: 1;
 }
 
@@ -170,39 +171,47 @@ img {
   gap: 12px;
 }
 
+/* Hover fills with accent, press shrinks, and on (liked, lyrics open) is the brand red, so the three never read alike. */
 .icon-btn {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
   color: var(--muted-foreground);
   flex: none;
-  transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1), color 150ms cubic-bezier(0.2, 0, 0, 1);
+  transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1), color 150ms cubic-bezier(0.2, 0, 0, 1),
+    transform 100ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .icon-btn:hover:not(:disabled) {
-  background: var(--muted);
+  background: var(--accent);
   color: var(--foreground);
 }
 
 .icon-btn[aria-pressed="true"] {
-  color: var(--foreground);
+  color: var(--primary);
 }
 
-.like[aria-pressed="true"] {
-  color: var(--destructive);
+.icon-btn:active:not(:disabled),
+.play-btn:active:not(:disabled) {
+  transform: scale(0.92);
 }
 
+/* The NCM play button: a red disc that darkens on hover. */
 .play-btn {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
-  background: var(--foreground);
-  color: var(--background);
-  transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1), transform 100ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.play-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 88%, black);
 }
 
 button:disabled {
@@ -248,19 +257,20 @@ button:disabled {
   width: 96px;
 }
 
+/* NCM's red progress bar on an input-colored track. */
 .range {
   flex: 1;
   appearance: none;
   height: 16px;
-  background: linear-gradient(var(--foreground), var(--foreground)) 0 50% / var(--fill) 4px no-repeat,
-    linear-gradient(var(--accent), var(--accent)) 0 50% / 100% 4px no-repeat;
+  background: linear-gradient(var(--primary), var(--primary)) 0 50% / var(--fill) 4px no-repeat,
+    linear-gradient(var(--input), var(--input)) 0 50% / 100% 4px no-repeat;
   border-radius: 2px;
   cursor: pointer;
 }
 
 .range:disabled {
   cursor: default;
-  background: linear-gradient(var(--accent), var(--accent)) 0 50% / 100% 4px no-repeat;
+  background: linear-gradient(var(--input), var(--input)) 0 50% / 100% 4px no-repeat;
 }
 
 .range::-webkit-slider-thumb {
@@ -268,7 +278,8 @@ button:disabled {
   width: 12px;
   height: 12px;
   border-radius: 999px;
-  background: var(--foreground);
+  background: var(--primary);
+  box-shadow: 0 0 0 2px var(--card);
   opacity: 0;
   transition: opacity 150ms cubic-bezier(0.2, 0, 0, 1);
 }
@@ -330,7 +341,7 @@ button:disabled {
 }
 
 .day-cover--liked {
-  color: var(--destructive);
+  color: var(--primary);
 }
 
 .day-cover--liked svg {
@@ -396,18 +407,21 @@ button:disabled {
   font-size: 20px;
   line-height: 28px;
   letter-spacing: -0.018em;
-  color: color-mix(in srgb, var(--muted-foreground) 70%, transparent);
-  transition: color 150ms cubic-bezier(0.2, 0, 0, 1), background-color 150ms cubic-bezier(0.2, 0, 0, 1);
+  color: color-mix(in srgb, var(--muted-foreground) 55%, transparent);
+  transition:
+    color 300ms cubic-bezier(0.2, 0, 0, 1),
+    scale 300ms cubic-bezier(0.2, 0, 0, 1),
+    background-color 150ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .lyrics__line:hover {
-  background: var(--card);
+  background: color-mix(in srgb, var(--accent) 60%, transparent);
   color: var(--muted-foreground);
 }
 
 .lyrics__line[aria-current="true"] {
+  /* No weight change: it reflows the line and makes the follow target jitter. */
   color: var(--foreground);
-  font-weight: 600;
 }
 
 .lyrics__trans {
@@ -423,7 +437,7 @@ button:disabled {
 
 /* Word-timed lines: each word fills left to right as it is sung. */
 .lyrics__line[aria-current="true"] .karaoke > span {
-  background: linear-gradient(90deg, var(--foreground) var(--p, 0%), color-mix(in srgb, var(--muted-foreground) 70%, transparent) var(--p, 0%));
+  background: linear-gradient(90deg, var(--foreground) var(--p, 0%), color-mix(in srgb, var(--muted-foreground) 55%, transparent) var(--p, 0%));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

@@ -1,11 +1,12 @@
 import { search } from "../api";
-import { Loading, Notice, useLoad } from "../components/states";
+import { SearchSkeleton } from "../components/skeletons";
+import { Notice, useCached } from "../components/states";
 import { TrackTable } from "../components/TrackTable";
 
 export function SearchView({ q }: { q: string }) {
-  const { data, error } = useLoad(() => search(q));
+  const { data, error } = useCached(`search:${q}`, () => search(q));
   if (error) return <Notice message={`搜索失败。${error}`} />;
-  if (!data) return <Loading />;
+  if (!data) return <SearchSkeleton />;
   return (
     <>
       <header className="flex flex-col gap-2 pb-10">

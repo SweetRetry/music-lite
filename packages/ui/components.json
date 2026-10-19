@@ -10,7 +10,7 @@
     "cssVariables": true,
     "prefix": ""
   },
-  "iconLibrary": "lucide",
+  "iconLibrary": "phosphor",
   "aliases": {
     "components": "@ncm-lite/ui/components",
     "utils": "@ncm-lite/ui/lib/utils",

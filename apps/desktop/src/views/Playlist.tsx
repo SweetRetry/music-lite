@@ -1,29 +1,33 @@
-import { useEffect, useRef, useState } from "react";
+import { Heart } from "@phosphor-icons/react";
+import { useEffect, useState } from "react";
+import type { Playlist } from "../api";
+import { peek } from "../cache";
 import { Hero } from "../components/Hero";
 import { PlaylistMoreMenu } from "../components/playlist/actions";
-import { Loading, Notice } from "../components/states";
+import { PageSkeleton } from "../components/skeletons";
+import { Notice } from "../components/states";
 import { TrackTable } from "../components/TrackTable";
 import { cover } from "../format";
-import { Icon } from "../icons";
 import { library, useLibrary } from "../library";
 
-// Reads the playlist from the library, so mutations show up in place. When a mutation drops the
-// cached copy, it is fetched again while the last copy stays on screen.
+// Reads the playlist from the library, so mutations show up in place. The copy on screen (opened, or
+// the persisted one on a cold start) paints at once and is revalidated on every mount; a refetch
+// replaces it without ever clearing it.
 function useOpenedPlaylist(id: number) {
-  const cached = useLibrary((s) => s.opened[id]);
-  const last = useRef(cached);
-  if (cached) last.current = cached;
+  const opened = useLibrary((s) => s.opened[id]);
+  const data = opened ?? peek<Playlist>(`playlist:${id}`);
   const [error, setError] = useState("");
   useEffect(() => {
-    if (!cached) library.playlist(id).catch((e) => setError(e.message));
-  }, [id, cached]);
-  return { data: last.current, error };
+    setError("");
+    library.reload(id).catch((e) => setError(e.message));
+  }, [id]);
+  return { data, error };
 }
 
 export function PlaylistView({ id }: { id: number }) {
   const { data, error } = useOpenedPlaylist(id);
   if (error && !data) return <Notice message={`歌单没加载出来。${error}`} />;
-  if (!data) return <Loading />;
+  if (!data) return <PageSkeleton art="square" />;
   return (
     <>
       <Hero
@@ -43,7 +47,7 @@ export function PlaylistView({ id }: { id: number }) {
 export function LikedView() {
   const me = useLibrary((s) => s.me);
   const likedId = me?.playlists.find((p) => p.liked)?.id;
-  if (!me) return <Loading />;
+  if (!me) return <PageSkeleton art="square" />;
   if (!likedId) return <Notice message="没找到「我喜欢的音乐」。" />;
   return <LikedList key={likedId} id={likedId} />;
 }
@@ -51,13 +55,13 @@ export function LikedView() {
 function LikedList({ id }: { id: number }) {
   const { data, error } = useOpenedPlaylist(id);
   if (error && !data) return <Notice message={`喜欢的音乐没加载出来。${error}`} />;
-  if (!data) return <Loading />;
+  if (!data) return <PageSkeleton art="square" />;
   return (
     <>
       <Hero
         art={
           <div className="hero__cover day-cover day-cover--liked">
-            <Icon name="heart" filled />
+            <Heart weight="fill" />
           </div>
         }
         title="我喜欢的音乐"
