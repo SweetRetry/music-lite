@@ -1,4 +1,5 @@
-// Album payloads, normalized. Endpoint as the official client calls it: /api/album/v3/detail.
+// Album payloads, normalized. The official client's /api/album/v3/detail needs a cache_key signed by its
+// native layer and returns 400 without one; /api/v1/album/{id} returns { album, songs } instead.
 import { type Ref, type Track, https, toTrack } from "../api";
 import { eapi } from "../eapi";
 
@@ -24,10 +25,9 @@ export const toAlbumCard = (a: any): AlbumCard => ({
 });
 
 export async function album(id: number): Promise<Album> {
-  const res = await eapi("/api/album/v3/detail", { id });
-  // The payload has called its header `info` and `album` in different client versions.
-  const info = res.info ?? res.album ?? {};
-  const cover = https(info.picUrl ?? info.cover ?? info.coverUrl);
+  const res = await eapi(`/api/v1/album/${id}`);
+  const info = res.album ?? {};
+  const cover = https(info.picUrl);
   const tracks: Track[] = (res.songs ?? []).map((s: any) => {
     const t = toTrack(s);
     return { ...t, cover: t.cover || cover };
@@ -36,10 +36,10 @@ export async function album(id: number): Promise<Album> {
     id,
     name: info.name ?? "",
     cover,
-    artists: (info.artists ?? (info.artist ? [info.artist] : [])).map((a: any) => ({ id: a.id, name: a.name })),
+    artists: (info.artists ?? []).map((a: any) => ({ id: a.id, name: a.name })),
     publishTime: info.publishTime ?? 0,
     trackCount: info.size ?? tracks.length,
-    description: (info.description ?? info.desc ?? "").trim(),
+    description: (info.description ?? "").trim(),
     tracks,
   };
 }

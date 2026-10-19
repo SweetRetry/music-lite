@@ -1,5 +1,5 @@
-// Artist payloads, normalized. Endpoints as the official client calls them:
-// /api/artist/v3/detail (artist + hot songs) and /api/artist/albums/{id}.
+// Artist payloads, normalized. The official client's /api/artist/v3/detail needs a cache_key signed by
+// its native layer and returns 400 without one; /api/v1/artist/{id} returns the same artist + hotSongs.
 import { type Track, https, toTrack } from "../api";
 import { eapi } from "../eapi";
 import { type AlbumCard, toAlbumCard } from "./album";
@@ -18,7 +18,7 @@ export type Artist = {
 
 export async function artist(id: number): Promise<Artist> {
   const [detail, albums] = await Promise.all([
-    eapi("/api/artist/v3/detail", { id }),
+    eapi(`/api/v1/artist/${id}`),
     eapi(`/api/artist/albums/${id}`, { limit: 100, offset: 0 }),
   ]);
   const a = detail.artist ?? {};
