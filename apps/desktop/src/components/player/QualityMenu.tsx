@@ -28,7 +28,8 @@ function useSongPrivilege(open: boolean) {
       stale = true;
     };
   }, [open, id]);
-  return got?.id === id ? got.p : null;
+  // With an empty queue id is undefined, and got?.id === id would hold before anything loads.
+  return got && got.id === id ? got.p : null;
 }
 
 export function QualityMenu() {
