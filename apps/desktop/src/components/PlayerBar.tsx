@@ -4,6 +4,8 @@ import { library, useLibrary } from "../library";
 import { player, usePlayer } from "../player";
 import { useUi } from "../ui";
 import { Artists } from "./Artists";
+import { QualityMenu } from "./player/QualityMenu";
+import { QueuePanel } from "./player/QueuePanel";
 import { Range } from "./Range";
 
 export function PlayerBar() {
@@ -63,6 +65,7 @@ export function PlayerBar() {
         </div>
       </div>
       <div className="player__volume">
+        <QualityMenu />
         <button
           className="icon-btn"
           aria-label="歌词"
@@ -72,6 +75,7 @@ export function PlayerBar() {
         >
           <Icon name="lyrics" />
         </button>
+        <QueuePanel />
         <Icon name="volume" />
         <Range value={s.volume} max={1} step={0.01} label="音量" onChange={player.setVolume} />
       </div>
