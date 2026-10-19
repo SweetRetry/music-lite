@@ -2138,6 +2138,8 @@ dependencies = [
  "ecb",
  "hex",
  "md-5",
+ "objc2",
+ "objc2-app-kit",
  "rand",
  "reqwest",
  "serde_json",
