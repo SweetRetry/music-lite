@@ -68,7 +68,7 @@ export function PlaylistMoreMenu({ playlist }: { playlist: PlaylistSummary }) {
   if (!actions.length) return null;
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="outline" size="icon" className="size-[34px]" aria-label="更多" />}>
+      <DropdownMenuTrigger render={<Button variant="outline" size="icon-lg" aria-label="更多" />}>
         <Ellipsis />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
