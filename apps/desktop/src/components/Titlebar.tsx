@@ -10,12 +10,13 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@ncm-lite/ui/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@ncm-lite/ui/components/ui/tooltip";
 import { useCanGoBack, useRouter } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { type Theme, useTheme } from "../theme";
+import type { ShortcutId } from "../shortcuts";
 import { SearchBox } from "./SearchBox";
+import { Tip } from "./ShortcutKeys";
 
 const themes: { value: Theme; label: string }[] = [
   { value: "system", label: "跟随系统" },
@@ -45,24 +46,26 @@ function useCanGoForward() {
 
 function NavButton({
   label,
+  id,
   disabled,
   onClick,
   children,
 }: {
   label: string;
+  id: ShortcutId;
   disabled: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }) {
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={<Button variant="ghost" size="icon-sm" aria-label={label} disabled={disabled} onClick={onClick} />}
-      >
-        {children}
-      </TooltipTrigger>
-      <TooltipContent side="bottom">{label}</TooltipContent>
-    </Tooltip>
+    <Tip
+      label={label}
+      id={id}
+      side="bottom"
+      render={<Button variant="ghost" size="icon-sm" aria-label={label} disabled={disabled} onClick={onClick} />}
+    >
+      {children}
+    </Tip>
   );
 }
 
@@ -81,10 +84,10 @@ export function Titlebar() {
       className="relative z-10 col-span-full row-start-1 grid grid-cols-subgrid items-center text-muted-foreground"
     >
       <div data-tauri-drag-region className="flex h-full items-center gap-1 pl-24">
-        <NavButton label="后退" disabled={!canBack} onClick={() => history.back()}>
+        <NavButton label="后退" id="back" disabled={!canBack} onClick={() => history.back()}>
           <ChevronLeft />
         </NavButton>
-        <NavButton label="前进" disabled={!canForward} onClick={() => history.forward()}>
+        <NavButton label="前进" id="forward" disabled={!canForward} onClick={() => history.forward()}>
           <ChevronRight />
         </NavButton>
       </div>

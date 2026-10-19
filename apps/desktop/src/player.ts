@@ -1,5 +1,4 @@
 // One audio element, one queue. Songs without a playable source are skipped, not fatal.
-import { useEffect } from "react";
 import { create } from "zustand";
 import { songUrl, type Track } from "./api";
 import { DEFAULT_QUALITY, isQuality, type Quality } from "./api/quality";
@@ -161,6 +160,15 @@ export const player = {
     audio.currentTime = seconds;
     set({ position: seconds });
   },
+  // Relative seek, clamped to the song. Does nothing while no song is ready.
+  seekBy(seconds: number) {
+    const { index, loading, duration } = state();
+    if (index < 0 || loading || !duration) return;
+    player.seek(Math.min(Math.max(audio.currentTime + seconds, 0), duration));
+  },
+  adjustVolume(delta: number) {
+    player.setVolume(Math.round(Math.min(Math.max(state().volume + delta, 0), 1) * 100) / 100);
+  },
   setVolume(volume: number) {
     audio.volume = volume;
     set({ volume });
@@ -181,22 +189,4 @@ if ("mediaSession" in navigator) {
   navigator.mediaSession.setActionHandler("pause", () => audio.pause());
   navigator.mediaSession.setActionHandler("nexttrack", () => player.next());
   navigator.mediaSession.setActionHandler("previoustrack", () => player.prev());
-}
-
-export function usePlayerShortcuts(focusSearch: () => void) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const typing = e.target instanceof HTMLInputElement;
-      if ((e.metaKey && e.key === "f") || (!typing && e.key === "/")) {
-        e.preventDefault();
-        focusSearch();
-      } else if (!typing && e.code === "Space") {
-        e.preventDefault();
-        player.toggle();
-      } else if (!typing && e.metaKey && e.key === "ArrowRight") player.next();
-      else if (!typing && e.metaKey && e.key === "ArrowLeft") player.prev();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [focusSearch]);
 }
