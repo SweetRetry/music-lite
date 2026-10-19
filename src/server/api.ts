@@ -9,7 +9,10 @@ export type Track = {
   album: string;
   cover: string;
   durationMs: number;
+  reason?: string;
 };
+
+export type LyricLine = { ms: number; text: string; trans?: string };
 
 export type PlaylistSummary = { id: number; name: string; cover: string; trackCount: number; mine: boolean };
 export type Playlist = PlaylistSummary & { creator: string; tracks: Track[] };
@@ -76,6 +79,31 @@ export async function songUrl(id: number): Promise<string | null> {
     encodeType: "aac",
   });
   return data[0]?.url ?? null;
+}
+
+export async function daily(): Promise<Track[]> {
+  const { data } = await eapi("/api/v3/discovery/recommend/songs");
+  return data.dailySongs.map((s: any) => ({ ...toTrack(s), reason: s.reason ?? undefined }));
+}
+
+// LRC lines may carry several timestamps. Credit lines arrive as JSON objects and are dropped.
+function parseLrc(lrc = ""): Map<number, string> {
+  const lines = new Map<number, string>();
+  for (const row of lrc.split("\n")) {
+    const stamps = [...row.matchAll(/\[(\d+):(\d+(?:\.\d+)?)\]/g)];
+    const text = row.replace(/\[[^\]]*\]/g, "").trim();
+    for (const [, m, s] of stamps) lines.set(Math.round((Number(m) * 60 + Number(s)) * 1000), text);
+  }
+  return lines;
+}
+
+export async function lyric(id: number): Promise<LyricLine[]> {
+  const res = await eapi("/api/song/lyric/v1", { id, cp: false, tv: 0, lv: 0, rv: 0, kv: 0, yv: 0, ytv: 0, yrv: 0 });
+  const trans = parseLrc(res.tlyric?.lyric);
+  return [...parseLrc(res.lrc?.lyric)]
+    .sort(([a], [b]) => a - b)
+    .filter(([, text]) => text)
+    .map(([ms, text]) => ({ ms, text, trans: trans.get(ms) || undefined }));
 }
 
 export async function like(id: number, liked: boolean): Promise<void> {

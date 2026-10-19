@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "./icons";
-import { cover, duration, lite, type Me, type Playlist, type PlaylistSummary, type Track } from "./lite";
+import { cover, duration, lite, type LyricLine, type Me, type Playlist, type PlaylistSummary, type Track } from "./lite";
 import { player, usePlayer, usePlayerShortcuts } from "./player";
 
-type View = { kind: "playlist"; id: number } | { kind: "search"; q: string };
+type View = { kind: "daily" } | { kind: "playlist"; id: number } | { kind: "search"; q: string };
 
 const playlistCache = new Map<number, Playlist>();
 
 export function App() {
   const [me, setMe] = useState<Me | null>(null);
   const [error, setError] = useState("");
-  const [view, setView] = useState<View | null>(null);
+  const [view, setView] = useState<View>({ kind: "daily" });
+  const [lyricsOpen, setLyricsOpen] = useState(false);
   const [liked, setLiked] = useState<Set<number>>(new Set());
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -20,12 +21,23 @@ export function App() {
       .then((m) => {
         setMe(m);
         setLiked(new Set(m.liked));
-        if (m.playlists[0]) setView({ kind: "playlist", id: m.playlists[0].id });
       })
       .catch((e) => setError(e.message));
   }, []);
 
   usePlayerShortcuts(useCallback(() => searchRef.current?.focus(), []));
+
+  useEffect(() => {
+    if (!lyricsOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setLyricsOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lyricsOpen]);
+
+  const navigate = (v: View) => {
+    setView(v);
+    setLyricsOpen(false);
+  };
 
   const toggleLike = async (id: number) => {
     const next = !liked.has(id);
@@ -44,12 +56,22 @@ export function App() {
 
   return (
     <div className="shell">
-      <Sidebar me={me} view={view} onNavigate={setView} searchRef={searchRef} />
-      <main className="main">
-        {view?.kind === "playlist" && <PlaylistView key={view.id} id={view.id} />}
-        {view?.kind === "search" && <SearchView key={view.q} q={view.q} />}
-      </main>
-      <PlayerBar liked={liked} onLike={toggleLike} />
+      <Sidebar me={me} view={view} onNavigate={navigate} searchRef={searchRef} />
+      {lyricsOpen ? (
+        <LyricsView />
+      ) : (
+        <main className="main">
+          {view.kind === "daily" && <DailyView />}
+          {view.kind === "playlist" && <PlaylistView key={view.id} id={view.id} />}
+          {view.kind === "search" && <SearchView key={view.q} q={view.q} />}
+        </main>
+      )}
+      <PlayerBar
+        liked={liked}
+        onLike={toggleLike}
+        lyricsOpen={lyricsOpen}
+        onToggleLyrics={() => setLyricsOpen((o) => !o)}
+      />
     </div>
   );
 }
@@ -61,7 +83,7 @@ function Sidebar({
   searchRef,
 }: {
   me: Me | null;
-  view: View | null;
+  view: View;
   onNavigate: (v: View) => void;
   searchRef: React.RefObject<HTMLInputElement>;
 }) {
@@ -94,6 +116,14 @@ function Sidebar({
         <kbd>/</kbd>
       </label>
       <div className="sidebar__scroll">
+        <button
+          className="sidebar__item"
+          aria-current={view.kind === "daily"}
+          onClick={() => onNavigate({ kind: "daily" })}
+        >
+          <span className="day-tile">{new Date().getDate()}</span>
+          <span>每日推荐</span>
+        </button>
         <PlaylistGroup title="创建的歌单" items={mine} view={view} onNavigate={onNavigate} />
         {saved.length > 0 && <PlaylistGroup title="收藏的歌单" items={saved} view={view} onNavigate={onNavigate} />}
       </div>
@@ -115,7 +145,7 @@ function PlaylistGroup({
 }: {
   title: string;
   items: PlaylistSummary[];
-  view: View | null;
+  view: View;
   onNavigate: (v: View) => void;
 }) {
   return (
@@ -125,7 +155,7 @@ function PlaylistGroup({
         <button
           key={p.id}
           className="sidebar__item"
-          aria-current={view?.kind === "playlist" && view.id === p.id}
+          aria-current={view.kind === "playlist" && view.id === p.id}
           onClick={() => onNavigate({ kind: "playlist", id: p.id })}
         >
           <img src={cover(p.cover, 24)} alt="" />
@@ -175,6 +205,32 @@ function PlaylistView({ id }: { id: number }) {
   );
 }
 
+function DailyView() {
+  const { data, error } = useLoad(lite.daily);
+  if (error) return <Notice message={`每日推荐没加载出来。${error}`} />;
+  if (!data) return <Loading />;
+  const today = new Date();
+  return (
+    <>
+      <header className="hero">
+        <div className="hero__cover day-cover">
+          <span className="day-cover__month">{today.getMonth() + 1} 月</span>
+          <span className="day-cover__date">{today.getDate()}</span>
+        </div>
+        <div className="hero__text">
+          <h1>每日推荐</h1>
+          <p className="meta">根据你的口味生成，每天 6:00 更新 · {data.length} 首</p>
+          <button className="btn btn--primary" disabled={!data.length} onClick={() => player.playQueue(data, 0)}>
+            <Icon name="play" />
+            播放全部
+          </button>
+        </div>
+      </header>
+      <TrackTable tracks={data} />
+    </>
+  );
+}
+
 function SearchView({ q }: { q: string }) {
   const { data, error } = useLoad(() => lite.search(q));
   if (error) return <Notice message={`搜索失败。${error}`} />;
@@ -220,6 +276,7 @@ function TrackTable({ tracks }: { tracks: Track[] }) {
               <div className="title">
                 <img src={cover(t.cover, 32)} alt="" loading="lazy" />
                 <span>{t.name}</span>
+                {t.reason && <span className="reason">{t.reason}</span>}
               </div>
             </td>
             <td className="muted">{t.artists}</td>
@@ -232,7 +289,17 @@ function TrackTable({ tracks }: { tracks: Track[] }) {
   );
 }
 
-function PlayerBar({ liked, onLike }: { liked: Set<number>; onLike: (id: number) => void }) {
+function PlayerBar({
+  liked,
+  onLike,
+  lyricsOpen,
+  onToggleLyrics,
+}: {
+  liked: Set<number>;
+  onLike: (id: number) => void;
+  lyricsOpen: boolean;
+  onToggleLyrics: () => void;
+}) {
   const s = usePlayer();
   const track = s.queue[s.index];
   const disabled = !track;
@@ -241,13 +308,15 @@ function PlayerBar({ liked, onLike }: { liked: Set<number>; onLike: (id: number)
       <div className="player__track">
         {track ? (
           <>
-            <img src={cover(track.cover, 44)} alt="" />
+            <button className="player__cover" aria-label={lyricsOpen ? "收起歌词" : "展开歌词"} onClick={onToggleLyrics}>
+              <img src={cover(track.cover, 44)} alt="" />
+            </button>
             <div className="player__names">
               <span>{track.name}</span>
               <span className="muted">{s.notice || track.artists}</span>
             </div>
             <button
-              className="icon-btn"
+              className="icon-btn like"
               aria-label={liked.has(track.id) ? "取消喜欢" : "喜欢"}
               aria-pressed={liked.has(track.id)}
               onClick={() => onLike(track.id)}
@@ -284,10 +353,95 @@ function PlayerBar({ liked, onLike }: { liked: Set<number>; onLike: (id: number)
         </div>
       </div>
       <div className="player__volume">
+        <button
+          className="icon-btn"
+          aria-label="歌词"
+          aria-pressed={lyricsOpen}
+          disabled={disabled}
+          onClick={onToggleLyrics}
+        >
+          <Icon name="lyrics" />
+        </button>
         <Icon name="volume" />
         <Range value={s.volume} max={1} step={0.01} label="音量" onChange={player.setVolume} />
       </div>
     </footer>
+  );
+}
+
+const lyricCache = new Map<number, LyricLine[]>();
+
+function LyricsView() {
+  const { queue, index, position } = usePlayer();
+  const track = queue[index];
+  const [lines, setLines] = useState<LyricLine[] | null>(null);
+  const [error, setError] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const userScrolledAt = useRef(0);
+
+  useEffect(() => {
+    if (!track) return;
+    setError("");
+    const cached = lyricCache.get(track.id);
+    if (cached) return setLines(cached);
+    setLines(null);
+    let live = true;
+    lite.lyric(track.id).then(
+      (l) => {
+        lyricCache.set(track.id, l);
+        if (live) setLines(l);
+      },
+      (e) => live && setError(e.message),
+    );
+    return () => {
+      live = false;
+    };
+  }, [track?.id]);
+
+  const ms = position * 1000;
+  let active = -1;
+  if (lines) for (let i = 0; i < lines.length && lines[i].ms <= ms; i++) active = i;
+
+  // Follow the song unless the reader scrolled in the last 3 seconds.
+  useEffect(() => {
+    if (active < 0 || Date.now() - userScrolledAt.current < 3000) return;
+    scrollRef.current
+      ?.querySelector(`[data-line="${active}"]`)
+      ?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [active]);
+
+  if (!track) return <main className="main"><p className="state muted">还没有在播放的歌</p></main>;
+
+  return (
+    <main className="lyrics">
+      <aside className="lyrics__meta">
+        <img src={cover(track.cover, 240)} alt="" />
+        <h1>{track.name}</h1>
+        <p className="muted">{track.artists}</p>
+        <p className="muted">{track.album}</p>
+      </aside>
+      <div
+        className="lyrics__scroll"
+        ref={scrollRef}
+        onWheel={() => (userScrolledAt.current = Date.now())}
+      >
+        {error && <Notice message={`歌词没加载出来。${error}`} />}
+        {!error && !lines && <p className="state muted">加载中</p>}
+        {lines?.length === 0 && <p className="lyrics__empty muted">这首歌没有歌词</p>}
+        {lines?.map((l, i) => (
+          <button
+            key={i}
+            data-line={i}
+            className="lyrics__line"
+            aria-current={i === active}
+            onClick={() => player.seek(l.ms / 1000)}
+          >
+            <span>{l.text}</span>
+            {l.trans && <span className="lyrics__trans">{l.trans}</span>}
+          </button>
+        ))}
+      </div>
+    </main>
   );
 }
 

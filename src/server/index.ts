@@ -21,6 +21,8 @@ const server = Bun.serve({
     "/lite/me": json(() => api.me()),
     "/lite/playlist/:id": json((req) => api.playlist(Number(req.params.id))),
     "/lite/search": json((req) => api.search(new URL(req.url).searchParams.get("q") ?? "")),
+    "/lite/daily": json(() => api.daily()),
+    "/lite/lyric/:id": json((req) => api.lyric(Number(req.params.id))),
     "/lite/url/:id": json(async (req) => ({ url: await api.songUrl(Number(req.params.id)) })),
     "/lite/like/:id": {
       POST: json(async (req) => {
