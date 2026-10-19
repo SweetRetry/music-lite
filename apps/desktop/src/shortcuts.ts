@@ -14,7 +14,7 @@ import { player, usePlayer } from "./player";
 import { router } from "./router";
 import { useUi } from "./ui";
 
-export const GROUPS = ["播放", "导航", "视图", "列表", "帮助"] as const;
+export const GROUPS = ["播放", "全局", "导航", "视图", "列表", "帮助"] as const;
 type Group = (typeof GROUPS)[number];
 
 export type Shortcut = {
@@ -83,6 +83,15 @@ export const shortcuts = {
     when: hasTrack,
     inputs: true,
   },
+
+  // Registered system-wide in src-tauri/src/shortcuts.rs, so they work while the window is hidden.
+  // These entries only document them; the keydown listener never sees Option chords.
+  globalToggle: { keys: ["Mod+Alt+P"], label: "播放 / 暂停", group: "全局", run: () => {}, when: () => false },
+  globalPrev: { keys: ["Mod+Alt+ArrowLeft"], label: "上一首", group: "全局", run: () => {}, when: () => false },
+  globalNext: { keys: ["Mod+Alt+ArrowRight"], label: "下一首", group: "全局", run: () => {}, when: () => false },
+  globalVolumeUp: { keys: ["Mod+Alt+ArrowUp"], label: "音量加大", group: "全局", run: () => {}, when: () => false },
+  globalVolumeDown: { keys: ["Mod+Alt+ArrowDown"], label: "音量减小", group: "全局", run: () => {}, when: () => false },
+  globalLike: { keys: ["Mod+Alt+L"], label: "喜欢 / 取消喜欢当前歌曲", group: "全局", run: () => {}, when: () => false },
 
   search: {
     keys: ["Mod+F", "/"],
@@ -189,6 +198,7 @@ const compiled = Object.values(shortcuts as Record<ShortcutId, Shortcut>).map((s
 const GLYPHS: Record<string, string> = {
   Mod: "⌘",
   Shift: "⇧",
+  Alt: "⌥",
   ArrowUp: "↑",
   ArrowDown: "↓",
   ArrowLeft: "←",

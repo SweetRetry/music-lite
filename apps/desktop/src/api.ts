@@ -14,6 +14,9 @@ export type Track = {
   durationMs: number;
   // fee 1 means the song needs a VIP subscription to play in full.
   vip: boolean;
+  // Taken down (privilege.st < 0, -200 in every case seen): NetEase still lists it but serves no audio.
+  // Optional because copies cached before this field existed lack it.
+  unavailable?: boolean;
   reason?: string;
 };
 
@@ -30,7 +33,9 @@ export type Me = { uid: number; nickname: string; avatar: string; playlists: Pla
 // blocks those, and the same CDNs serve https.
 export const https = (url: string | null | undefined) => url?.replace(/^http:\/\//, "https://") ?? "";
 
-export const toTrack = (s: any): Track => ({
+// Every song list payload carries a privilege per song, except /api/v3/song/detail, which returns them
+// in a separate array that the caller passes in.
+export const toTrack = (s: any, privilege = s.privilege): Track => ({
   id: s.id,
   name: s.name,
   artists: (s.ar ?? []).map((a: any) => ({ id: a.id, name: a.name })),
@@ -38,6 +43,7 @@ export const toTrack = (s: any): Track => ({
   cover: https(s.al?.picUrl),
   durationMs: s.dt ?? 0,
   vip: s.fee === 1,
+  unavailable: (privilege?.st ?? 0) < 0,
 });
 
 export const toSummary = (p: any, uid: number): PlaylistSummary => ({
@@ -49,8 +55,10 @@ export const toSummary = (p: any, uid: number): PlaylistSummary => ({
   liked: p.specialType === 5 && p.userId === uid,
 });
 
-export async function me(): Promise<Me> {
+// null when signed out.
+export async function me(): Promise<Me | null> {
   const { account, profile } = await eapi("/api/nuser/account/get");
+  if (!account) return null;
   const uid = account.id;
   const [{ playlist }, { ids }] = await Promise.all([
     eapi("/api/user/playlist", { uid, limit: 1000, offset: 0, includeVideo: true }),
@@ -71,7 +79,11 @@ export async function songDetails(ids: number[]): Promise<Track[]> {
   const results = await Promise.all(
     batches.map((b) => eapi("/api/v3/song/detail", { c: JSON.stringify(b.map((id) => ({ id }))) })),
   );
-  return results.flatMap((r) => r.songs.map(toTrack));
+  // privileges is not index-aligned with songs (it also has entries for ids that returned no song).
+  return results.flatMap((r) => {
+    const privileges = new Map(r.privileges?.map((p: any) => [p.id, p]));
+    return r.songs.map((s: any) => toTrack(s, privileges.get(s.id)));
+  });
 }
 
 // uid is the signed-in account, so mine and liked describe the viewer, not the creator.

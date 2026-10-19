@@ -22,7 +22,7 @@ export async function artist(id: number): Promise<Artist> {
     eapi(`/api/artist/albums/${id}`, { limit: 100, offset: 0 }),
   ]);
   const a = detail.artist ?? {};
-  const hotSongs: Track[] = (detail.hotSongs ?? []).slice(0, 50).map(toTrack);
+  const hotSongs: Track[] = (detail.hotSongs ?? []).slice(0, 50).map((s: any) => toTrack(s));
   return {
     id,
     name: a.name ?? "",

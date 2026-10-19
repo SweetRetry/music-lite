@@ -39,9 +39,25 @@ fn encrypt_params(path: &str, text: &str) -> String {
 }
 
 #[tauri::command]
-pub async fn eapi(path: String, mut body: Map<String, Value>) -> Result<Value, String> {
+pub async fn eapi(path: String, body: Map<String, Value>) -> Result<Value, String> {
+    let (json, _) = send(&path, body, session::current().as_ref()).await?;
+    match json["code"].as_i64() {
+        Some(200) => Ok(json),
+        code => {
+            let message = json["message"].as_str().or(json["msg"].as_str()).unwrap_or("unknown");
+            Err(format!("{path} returned {}: {message}", code.unwrap_or(-1)))
+        }
+    }
+}
+
+// Signs and sends one call, signed in when a session is given. The JSON comes back whatever its code,
+// with the response headers, which carry the cookies of a fresh login.
+pub async fn send(
+    path: &str,
+    mut body: Map<String, Value>,
+    session: Option<&session::Session>,
+) -> Result<(Value, reqwest::header::HeaderMap), String> {
     let rest = path.strip_prefix("/api/").ok_or_else(|| format!("{path} is not an /api/ path"))?;
-    let session = session::read_official()?;
     let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default();
     let header = json!({
         "os": "osx",
@@ -49,8 +65,8 @@ pub async fn eapi(path: String, mut body: Map<String, Value>) -> Result<Value, S
         "osver": "15.0",
         "deviceId": *DEVICE_ID,
         "requestId": format!("{}_{}", now.as_millis(), rand::random_range(0..1000)),
-        "MUSIC_U": session.music_u,
-        "__csrf": session.csrf,
+        "MUSIC_U": session.map_or("", |s| &s.music_u),
+        "__csrf": session.map_or("", |s| &s.csrf),
     });
     let cookie = header
         .as_object()
@@ -61,9 +77,9 @@ pub async fn eapi(path: String, mut body: Map<String, Value>) -> Result<Value, S
         .join("; ");
     body.insert("header".into(), Value::String(header.to_string()));
     body.insert("e_r".into(), Value::Bool(false));
-    let params = encrypt_params(&path, &Value::Object(body).to_string());
+    let params = encrypt_params(path, &Value::Object(body).to_string());
 
-    let raw = CLIENT
+    let res = CLIENT
         .post(format!("{HOST}/eapi/{rest}"))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .header("Cookie", cookie)
@@ -71,20 +87,12 @@ pub async fn eapi(path: String, mut body: Map<String, Value>) -> Result<Value, S
         .send()
         .await
         .and_then(|r| r.error_for_status())
-        .map_err(|e| format!("{path} failed: {e}"))?
-        .bytes()
-        .await
         .map_err(|e| format!("{path} failed: {e}"))?;
+    let headers = res.headers().clone();
+    let raw = res.bytes().await.map_err(|e| format!("{path} failed: {e}"))?;
     let plain = if raw.first() == Some(&b'{') { raw.to_vec() } else { decrypt(&raw)? };
     let json: Value = serde_json::from_slice(&plain).map_err(|e| format!("{path} returned invalid JSON: {e}"))?;
-
-    match json["code"].as_i64() {
-        Some(200) => Ok(json),
-        code => {
-            let message = json["message"].as_str().or(json["msg"].as_str()).unwrap_or("unknown");
-            Err(format!("{path} returned {}: {message}", code.unwrap_or(-1)))
-        }
-    }
+    Ok((json, headers))
 }
 
 #[cfg(test)]

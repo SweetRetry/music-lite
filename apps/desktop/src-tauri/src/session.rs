@@ -1,6 +1,11 @@
-// Reuses the login of the official macOS client by reading its cookie jar.
-// The jar is read on every request, so signing in again there takes effect without a restart.
+// Where the login comes from. NCM Lite's own QR login is kept in login.json in the app data dir. Until the
+// user signs in or out here, the official macOS client's login is reused by reading its cookie jar, on every
+// request, so signing in again there takes effect without a restart.
 // The cookie stays in this process and only ever travels to music.163.com.
+use std::path::PathBuf;
+use std::sync::OnceLock;
+
+use serde::{Deserialize, Serialize};
 
 pub struct Session {
     pub music_u: String,
@@ -65,4 +70,47 @@ pub fn read_official() -> Result<Session, String> {
         return Err("No login found. Sign in once in the official NetEase Music app.".into());
     }
     Ok(Session { music_u, csrf: get("__csrf") })
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "lowercase")]
+pub enum Login {
+    Own { music_u: String, csrf: String },
+    Official,
+    SignedOut,
+}
+
+static FILE: OnceLock<PathBuf> = OnceLock::new();
+
+pub fn init(data_dir: PathBuf) {
+    let _ = FILE.set(data_dir.join("login.json"));
+}
+
+// A missing or unreadable file is the state before NCM Lite had a login of its own.
+fn stored() -> Login {
+    FILE.get()
+        .and_then(|f| std::fs::read(f).ok())
+        .and_then(|buf| serde_json::from_slice(&buf).ok())
+        .unwrap_or(Login::Official)
+}
+
+pub fn store(login: &Login) -> Result<(), String> {
+    let file = FILE.get().ok_or("The app data dir is not known yet")?;
+    if let Some(dir) = file.parent() {
+        std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+    }
+    std::fs::write(file, serde_json::to_vec(login).unwrap_or_default()).map_err(|e| e.to_string())
+}
+
+// None is signed out: requests go out anonymously.
+pub fn current() -> Option<Session> {
+    match stored() {
+        Login::Own { music_u, csrf } => Some(Session { music_u, csrf }),
+        Login::Official => read_official().ok(),
+        Login::SignedOut => None,
+    }
+}
+
+pub fn is_own() -> bool {
+    matches!(stored(), Login::Own { .. })
 }

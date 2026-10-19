@@ -1,9 +1,17 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@ncm-lite/ui/components/ui/avatar";
 import { Badge } from "@ncm-lite/ui/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@ncm-lite/ui/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ncm-lite/ui/components/ui/tooltip";
+import { SignOutIcon } from "@phosphor-icons/react";
+import { toast } from "sonner";
 import { vip as fetchVip } from "../api/vip";
 import { cover } from "../format";
-import { useLibrary } from "../library";
+import { library, useLibrary } from "../library";
 import { useCached } from "./states";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -25,10 +33,21 @@ export function Account() {
   if (!me) return null;
   return (
     <div className="flex min-w-0 items-center gap-2.5">
-      <Avatar className="size-9">
-        <AvatarImage src={cover(me.avatar, 36)} alt="" />
-        <AvatarFallback>{me.nickname.slice(0, 1)}</AvatarFallback>
-      </Avatar>
+      {/* The avatar opens the account menu. */}
+      <DropdownMenu>
+        <DropdownMenuTrigger className="shrink-0 rounded-full" aria-label="账号">
+          <Avatar className="size-9">
+            <AvatarImage src={cover(me.avatar, 36)} alt="" />
+            <AvatarFallback>{me.nickname.slice(0, 1)}</AvatarFallback>
+          </Avatar>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem onClick={() => library.logout().catch((e) => toast.error(`没能退出登录。${e}`))}>
+            <SignOutIcon />
+            退出登录
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       {/* The membership sits under the name, so a long nickname keeps the whole row. */}
       <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
         <span className="w-full truncate text-sm font-medium text-foreground">{me.nickname}</span>

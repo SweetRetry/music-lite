@@ -64,8 +64,12 @@ export function useTrackActions({ tracks, index, playlist }: TrackContext): Trac
       (e) => failed("没能添加到歌单", e),
     );
   return [
-    { kind: "item", label: "播放", icon: PlayIcon, onSelect: () => player.playQueue(tracks, index) },
-    { kind: "item", label: "下一首播放", icon: QueueIcon, onSelect: () => player.playNext(track) },
+    ...(track.unavailable
+      ? []
+      : ([
+          { kind: "item", label: "播放", icon: PlayIcon, onSelect: () => player.playQueue(tracks, index) },
+          { kind: "item", label: "下一首播放", icon: QueueIcon, onSelect: () => player.playNext(track) },
+        ] satisfies TrackAction[])),
     {
       kind: "item",
       label: liked ? "取消喜欢" : "喜欢",

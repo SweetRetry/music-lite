@@ -359,6 +359,8 @@ button:disabled {
 .lyrics {
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
+  /* One row as tall as the view. The lyrics column clips instead of scrolling, so an auto row would grow to every line. */
+  grid-template-rows: minmax(0, 1fr);
   gap: 48px;
   padding: 0 48px;
   overflow: hidden;
@@ -390,10 +392,10 @@ button:disabled {
   line-height: 18px;
 }
 
+/* clip, not hidden: a focused line must not scroll the box behind the transform's back. */
 .lyrics__scroll {
-  overflow-y: auto;
-  padding: 40vh 0;
-  scrollbar-width: none;
+  overflow: clip;
+  mask-image: linear-gradient(transparent, #000 15%, #000 85%, transparent);
 }
 
 .lyrics__line {

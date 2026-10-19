@@ -11,10 +11,24 @@ export const useUi = create<{
   toggleQueue: Toggle;
   toggleShortcuts: Toggle;
 }>((set) => ({
-  lyricsOpen: false,
+  // Remembered across launches, like the page under them.
+  lyricsOpen: (() => {
+    try {
+      return localStorage.getItem("lyricsOpen") === "1";
+    } catch {
+      return false;
+    }
+  })(),
   queueOpen: false,
   shortcutsOpen: false,
   toggleLyrics: (open) => set((s) => ({ lyricsOpen: open ?? !s.lyricsOpen })),
   toggleQueue: (open) => set((s) => ({ queueOpen: open ?? !s.queueOpen })),
   toggleShortcuts: (open) => set((s) => ({ shortcutsOpen: open ?? !s.shortcutsOpen })),
 }));
+
+useUi.subscribe((s, prev) => {
+  if (s.lyricsOpen === prev.lyricsOpen) return;
+  try {
+    localStorage.setItem("lyricsOpen", s.lyricsOpen ? "1" : "0");
+  } catch {}
+});

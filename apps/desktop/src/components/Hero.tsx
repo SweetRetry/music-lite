@@ -17,6 +17,8 @@ export function Hero({
   tracks: Track[];
   children?: React.ReactNode;
 }) {
+  // Play-all starts at the first song that can play.
+  const first = tracks.findIndex((t) => !t.unavailable);
   return (
     <header className="flex items-end gap-8 pb-10">
       {art}
@@ -26,7 +28,7 @@ export function Hero({
           <p className="truncate text-base text-muted-foreground">{meta}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="lg" disabled={!tracks.length} onClick={() => player.playQueue(tracks, 0)}>
+          <Button size="lg" disabled={first < 0} onClick={() => player.playQueue(tracks, first)}>
             <PlayIcon weight="fill" />
             播放全部
           </Button>

@@ -33,6 +33,6 @@ export const Fatal = ({ message }: { message: string }) => (
   <div className="fatal">
     <h1>没能连上网易云</h1>
     <p className="notice">{message}</p>
-    <p className="muted">先在官方客户端里登录一次，再重启 NCM Lite。</p>
+    <p className="muted">检查网络后重启 NCM Lite。</p>
   </div>
 );

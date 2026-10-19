@@ -1,17 +1,22 @@
 // The signed-in account: profile, playlists and liked songs. Shared by every view.
 import { create } from "zustand";
 import * as api from "./api";
+import { invoke } from "@tauri-apps/api/core";
 import { clear, drop, peek, put } from "./cache";
 import * as pl from "./api/playlists";
+import { player } from "./player";
 
 type Library = {
   me: api.Me | null;
   liked: Set<number>;
   error: string;
+  // No login at all: the app shows the login screen.
+  signedOut: boolean;
   // Opened playlists, seeded from the persistent cache. Views read them from here, so a
   // mutation that patches an entry updates the page in place.
   opened: Record<number, api.Playlist>;
   load: () => Promise<void>;
+  logout: () => Promise<void>;
   // Fetches and replaces opened[id]; the old copy stays until the new one lands.
   reload: (id: number) => Promise<api.Playlist>;
   likedPlaylist: () => api.PlaylistSummary | undefined;
@@ -54,6 +59,13 @@ export const useLibrary = create<Library>((set, get) => {
     if (playlists) set((s) => (s.me ? { me: { ...s.me, playlists } } : {}));
   };
 
+  // Nothing of the last account stays: not its cache, and not its queue.
+  const signOut = () => {
+    clear();
+    player.clear();
+    set({ me: null, liked: new Set(), opened: {}, error: "", signedOut: true });
+  };
+
   // Start from the persisted account so the sidebar and liked hearts paint on the first frame.
   const cachedMe = peek<api.Me>("me");
   const cachedOpened: Record<number, api.Playlist> = {};
@@ -66,17 +78,19 @@ export const useLibrary = create<Library>((set, get) => {
     me: cachedMe ?? null,
     liked: new Set(cachedMe?.liked),
     error: "",
+    signedOut: false,
     opened: cachedOpened,
     async load() {
       try {
         const me = await api.me();
+        if (!me) return signOut();
         // Another account signed in since the last run: nothing cached for the old one may show.
         const prev = get().me;
         if (prev && prev.uid !== me.uid) {
           clear();
           set({ opened: {} });
         }
-        set({ me, liked: new Set(me.liked), error: "" });
+        set({ me, liked: new Set(me.liked), error: "", signedOut: false });
       } catch (e) {
         // With a cached account the app is usable offline, so only a cold failure is fatal.
         if (!get().me) set({ error: (e as Error).message });
@@ -93,6 +107,10 @@ export const useLibrary = create<Library>((set, get) => {
         set((s) => ({ opened: { ...s.opened, [id]: p } }));
         return p;
       }),
+    async logout() {
+      await invoke("logout");
+      signOut();
+    },
     likedPlaylist: () => get().me?.playlists.find((p) => p.liked),
     async toggleLike(id) {
       const next = !get().liked.has(id);

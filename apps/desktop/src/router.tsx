@@ -58,13 +58,25 @@ const routes = [
 
 const [, , playlistRoute, searchRoute, artistRoute, albumRoute] = routes;
 
+// A launch opens the page the last one closed on. The window always starts at index.html with no hash.
+const PAGE = "page";
+try {
+  const page = localStorage.getItem(PAGE);
+  if (page && !location.hash) location.hash = page;
+} catch {}
+
 export const router = createRouter({
   routeTree: root.addChildren(routes),
   history: createHashHistory(),
 });
 
-// Leaving a page closes the lyrics that cover it.
-router.subscribe("onBeforeNavigate", () => useUi.getState().toggleLyrics(false));
+// Leaving a page closes the lyrics that cover it. The first load has no page to leave, so restored lyrics stay.
+router.subscribe("onBeforeNavigate", (e) => e.fromLocation && useUi.getState().toggleLyrics(false));
+router.subscribe("onResolved", (e) => {
+  try {
+    localStorage.setItem(PAGE, e.toLocation.href);
+  } catch {}
+});
 
 declare module "@tanstack/react-router" {
   interface Register {

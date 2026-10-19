@@ -12,10 +12,12 @@ import { useLibrary } from "./library";
 import { useShortcuts } from "./shortcuts";
 import { useTheme } from "./theme";
 import { useUi } from "./ui";
+import { LoginView } from "./views/Login";
 import { LyricsView } from "./views/Lyrics";
 
 export function Shell() {
   const error = useLibrary((s) => s.error);
+  const signedOut = useLibrary((s) => s.signedOut);
   const lyricsOpen = useUi((s) => s.lyricsOpen);
   const theme = useTheme((s) => s.theme);
 
@@ -26,6 +28,7 @@ export function Shell() {
   useShortcuts();
 
   if (error) return <Fatal message={error} />;
+  if (signedOut) return <LoginView />;
 
   return (
     // The provider only supplies sidebar context and --sidebar-width; `contents` keeps it out of the grid.

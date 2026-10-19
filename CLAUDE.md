@@ -4,7 +4,7 @@ A lightweight NetEase Cloud Music desktop client. Tauri 2 + React 19, pnpm + tur
 
 ## Layout
 
-- `apps/desktop/src-tauri` is the Rust native layer. It exposes one command, `eapi(path, body)`, which signs and sends any NetEase `/api/...` call with the official client's login. New features never need Rust changes.
+- `apps/desktop/src-tauri` is the Rust native layer. `eapi(path, body)` signs and sends any NetEase `/api/...` call with the current login (our own QR login, or the official client's). Data features never need Rust changes. Rust also owns the login cookie (`session.rs`, `login.rs`), the tray (`tray.rs`), global shortcuts (`shortcuts.rs`), and hide-on-close. Tray items and global shortcuts reach the player as a `control` event, handled in `src/controls.ts`.
 - `apps/desktop/src/api.ts` normalizes raw NetEase payloads into `Track`, `Playlist`, `Me`. Add feature endpoints in `src/api/<feature>.ts`, reusing `toTrack`, `toSummary`, `songDetails`, `https`.
 - `apps/desktop/src/router.tsx` holds every route (TanStack Router, code-based, hash history). Navigate with `<Link to="/artist/$id" params={{ id }}>` or `useNavigate`.
 - State lives in zustand stores: `library.ts` (account, playlists, liked), `player.ts` (queue, audio), `ui.ts` (non-route view state).

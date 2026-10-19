@@ -40,7 +40,9 @@ export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: P
                 aria-current={isCurrent}
                 // Hover fills, press fills more, focus rings, and the playing row is marked by red text
                 // and the eq bars instead of a fill, so the four never read alike.
-                className="group border-0 hover:bg-accent/60 focus-visible:-outline-offset-2 active:bg-accent [&>td:first-child]:rounded-l-lg [&>td:last-child]:rounded-r-lg"
+                // A taken-down song is greyed out like in the official client, and offers no play button.
+                data-unavailable={t.unavailable || undefined}
+                className="group border-0 data-unavailable:opacity-45 hover:bg-accent/60 focus-visible:-outline-offset-2 active:bg-accent [&>td:first-child]:rounded-l-lg [&>td:last-child]:rounded-r-lg"
                 onDoubleClick={() => player.playQueue(tracks, i)}
                 onKeyDown={(e) => e.key === "Enter" && e.target === e.currentTarget && player.playQueue(tracks, i)}
               >
@@ -52,7 +54,7 @@ export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: P
                         <span className="absolute inset-0 grid place-items-center rounded-md bg-background/60">
                           <span className="eq" data-playing={playing} />
                         </span>
-                      ) : (
+                      ) : t.unavailable ? null : (
                         <button
                           aria-label={`播放 ${t.name}`}
                           className={`absolute inset-0 grid place-items-center rounded-md bg-background/60 text-foreground ${reveal}`}
@@ -66,7 +68,12 @@ export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: P
                     <div className="flex min-w-0 flex-col gap-0.5">
                       <div className="flex min-w-0 items-center gap-2">
                         <span className={`truncate text-base ${isCurrent ? "text-primary" : "text-foreground"}`}>{t.name}</span>
-                        {t.vip && (
+                        {t.unavailable && (
+                          <Badge variant="outline" className="shrink-0 text-muted-foreground">
+                            已下架
+                          </Badge>
+                        )}
+                        {t.vip && !t.unavailable && (
                           <Badge variant="outline" className="shrink-0 border-primary/60 text-primary">
                             VIP
                           </Badge>
