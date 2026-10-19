@@ -2,29 +2,12 @@
 import { Button } from "@ncm-lite/ui/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@ncm-lite/ui/components/ui/popover";
 import { ScrollArea } from "@ncm-lite/ui/components/ui/scroll-area";
+import { ListMusic, X } from "lucide-react";
 import { artistNames, cover, duration } from "../../format";
 import { player, usePlayer } from "../../player";
 
 const ROW = 52;
 const MAX_HEIGHT = 420;
-
-const svg = { width: 16, height: 16, viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: 1.5 };
-
-function QueueIcon() {
-  return (
-    <svg {...svg} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M2.5 4h8M2.5 8h8M2.5 12h4M11.5 10v4l3-2z" />
-    </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg {...svg} strokeLinecap="round" aria-hidden>
-      <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" />
-    </svg>
-  );
-}
 
 export function QueuePanel() {
   const queue = usePlayer((s) => s.queue);
@@ -34,7 +17,7 @@ export function QueuePanel() {
       <PopoverTrigger
         render={<Button variant="ghost" size="icon-sm" className="text-muted-foreground" aria-label="播放队列" />}
       >
-        <QueueIcon />
+        <ListMusic className="size-4" />
       </PopoverTrigger>
       <PopoverContent side="top" align="end" sideOffset={12} className="w-96 gap-0 p-0">
         <div className="flex h-11 items-center justify-between px-4">
@@ -72,7 +55,7 @@ export function QueuePanel() {
                       aria-label={`从队列移除 ${t.name}`}
                       onClick={() => player.remove(i)}
                     >
-                      <CloseIcon />
+                      <X className="size-4" />
                     </Button>
                   </li>
                 );
