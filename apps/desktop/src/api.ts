@@ -74,10 +74,11 @@ export async function songDetails(ids: number[]): Promise<Track[]> {
   return results.flatMap((r) => r.songs.map(toTrack));
 }
 
-export async function playlist(id: number): Promise<Playlist> {
+// uid is the signed-in account, so mine and liked describe the viewer, not the creator.
+export async function playlist(id: number, uid: number): Promise<Playlist> {
   const { playlist: p } = await eapi("/api/v6/playlist/detail", { id, n: 0, s: 0 });
   const tracks = await songDetails(p.trackIds.map((t: any) => t.id));
-  return { ...toSummary(p, p.userId), creator: p.creator?.nickname ?? "", tracks };
+  return { ...toSummary(p, uid), creator: p.creator?.nickname ?? "", tracks };
 }
 
 export async function search(keyword: string): Promise<Track[]> {

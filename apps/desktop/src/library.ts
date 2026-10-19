@@ -70,7 +70,7 @@ export const useLibrary = create<Library>((set, get) => {
     async playlist(id) {
       const cached = get().opened[id];
       if (cached) return cached;
-      const p = await api.playlist(id);
+      const p = await api.playlist(id, get().me?.uid ?? 0);
       set((s) => ({ opened: { ...s.opened, [id]: p } }));
       return p;
     },
