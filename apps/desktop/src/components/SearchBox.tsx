@@ -1,17 +1,34 @@
-import { Input } from "@ncm-lite/ui/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@ncm-lite/ui/components/ui/avatar";
+import {
+  Combobox,
+  ComboboxCollection,
+  ComboboxContent,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxLabel,
+  ComboboxList,
+} from "@ncm-lite/ui/components/ui/combobox";
+import { InputGroupAddon } from "@ncm-lite/ui/components/ui/input-group";
 import { Kbd } from "@ncm-lite/ui/components/ui/kbd";
 import { useNavigate } from "@tanstack/react-router";
-import { MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { MagnifyingGlassIcon, VinylRecordIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
+import { type Suggestion, type SuggestionGroup, suggest, suggestionLabel } from "../api/suggest";
 
 // There is one search box, so shortcuts can focus it without threading refs through the tree.
 let input: HTMLInputElement | null = null;
 export const focusSearch = () => input?.focus();
 
+// Typing only fetches suggestions. Enter with nothing highlighted searches the typed text;
+// Enter or a click on a suggestion acts on that suggestion.
 export function SearchBox() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
+  const [open, setOpen] = useState(false);
+  const [groups, setGroups] = useState<SuggestionGroup[]>([]);
   const ref = useRef<HTMLInputElement>(null);
+  const anchor = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     input = ref.current;
@@ -20,26 +37,109 @@ export function SearchBox() {
 
   useEffect(() => {
     const keyword = q.trim();
-    if (!keyword) return;
-    const t = setTimeout(() => navigate({ to: "/search", search: { q: keyword }, replace: true }), 350);
-    return () => clearTimeout(t);
+    if (!keyword) return setGroups([]);
+    let live = true;
+    const t = setTimeout(() => suggest(keyword).then((g) => live && setGroups(g), () => {}), 150);
+    return () => {
+      live = false;
+      clearTimeout(t);
+    };
   }, [q]);
 
+  const searchFor = (keyword: string) => {
+    setOpen(false);
+    if (keyword) navigate({ to: "/search", search: { q: keyword } });
+  };
+
+  const pick = (s: Suggestion | null) => {
+    if (!s) return;
+    setOpen(false);
+    if (s.kind === "keyword") {
+      setQ(s.keyword);
+      searchFor(s.keyword);
+    } else if (s.kind === "artist") navigate({ to: "/artist/$id", params: { id: s.id } });
+    else navigate({ to: "/album/$id", params: { id: s.id } });
+  };
+
   return (
-    <div className="relative w-full max-w-md">
-      <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-      <Input
-        ref={ref}
-        value={q}
-        placeholder="搜索歌曲"
-        aria-label="搜索歌曲"
-        className="h-9 bg-background pr-9 pl-9"
-        onChange={(e) => setQ(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && q.trim()) navigate({ to: "/search", search: { q: q.trim() } });
-        }}
-      />
-      <Kbd className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2">/</Kbd>
-    </div>
+    // Base UI lets Enter submit the form only when no suggestion is highlighted.
+    <form
+      ref={anchor}
+      className="w-full max-w-md"
+      onSubmit={(e) => {
+        e.preventDefault();
+        searchFor(q.trim());
+      }}
+    >
+      <Combobox
+        items={groups}
+        filter={null}
+        value={null}
+        onValueChange={pick}
+        itemToStringLabel={suggestionLabel}
+        inputValue={q}
+        onInputValueChange={(v, d) => (d.reason === "input-change" || d.reason === "input-clear") && setQ(v)}
+        open={open && groups.length > 0}
+        onOpenChange={setOpen}
+      >
+        <ComboboxInput
+          ref={ref}
+          placeholder="搜索歌曲"
+          aria-label="搜索歌曲"
+          showTrigger={false}
+          className="h-9 w-full bg-background"
+        >
+          <InputGroupAddon align="inline-start">
+            <MagnifyingGlassIcon />
+          </InputGroupAddon>
+          <InputGroupAddon align="inline-end">
+            <Kbd>/</Kbd>
+          </InputGroupAddon>
+        </ComboboxInput>
+        <ComboboxContent anchor={anchor}>
+          <ComboboxList>
+            {(group: SuggestionGroup) => (
+              <ComboboxGroup key={group.value} items={group.items}>
+                <ComboboxLabel>{group.value}</ComboboxLabel>
+                <ComboboxCollection>
+                  {(s: Suggestion) => (
+                    <ComboboxItem key={`${s.kind}:${suggestionLabel(s)}:${"id" in s ? s.id : ""}`} value={s}>
+                      <SuggestionRow s={s} />
+                    </ComboboxItem>
+                  )}
+                </ComboboxCollection>
+              </ComboboxGroup>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
+    </form>
+  );
+}
+
+function SuggestionRow({ s }: { s: Suggestion }) {
+  if (s.kind === "keyword")
+    return (
+      <>
+        <MagnifyingGlassIcon className="text-muted-foreground" />
+        <span className="truncate">{s.keyword}</span>
+      </>
+    );
+  if (s.kind === "artist")
+    return (
+      <>
+        <Avatar className="size-6">
+          <AvatarImage src={s.avatar} alt="" />
+          <AvatarFallback>{s.name[0]}</AvatarFallback>
+        </Avatar>
+        <span className="truncate">{s.name}</span>
+      </>
+    );
+  return (
+    <>
+      <VinylRecordIcon className="text-muted-foreground" />
+      <span className="truncate">{s.name}</span>
+      <span className="truncate text-muted-foreground">{s.artist}</span>
+    </>
   );
 }
