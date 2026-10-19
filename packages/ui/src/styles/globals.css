@@ -5,52 +5,50 @@
 @source "../../../../apps/*/src";
 @source "../components";
 
-/* Tokens from Retry (sweetRetry/DESIGN.md). Dark by default, light follows the system. */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme]) *) {
+      @slot;
+    }
+  }
+}
+
+/*
+ * Tokens from Retry (sweetRetry/DESIGN.md). Each token is light-dark(light, dark), resolved by
+ * color-scheme. No data-theme on <html> follows the system, data-theme="light" | "dark" forces one.
+ */
 :root {
-  color-scheme: dark;
-  --background: #1c1c1e;
-  --foreground: #f5f5f7;
-  --surface-1: #242426;
-  --surface-2: #2c2c2e;
-  --surface-3: #363638;
-  --muted-foreground: #98989d;
-  --subtle-foreground: #6e6e73;
-  --primary: #2fbf71;
-  --primary-hover: #45cc83;
-  --primary-foreground: #06120b;
-  --destructive: #eb6f66;
-  --destructive-soft: rgba(235, 111, 102, 0.14);
-  --border: #38383a;
-  --input: #48484a;
-  --ring: #2fbf71;
-  --ring-soft: rgba(47, 191, 113, 0.22);
-  --sidebar: #161618;
-  --sidebar-accent: #2a2a2c;
+  color-scheme: light dark;
+  --background: light-dark(#fbfbfd, #1c1c1e);
+  --foreground: light-dark(#1d1d1f, #f5f5f7);
+  --surface-1: light-dark(#f3f3f5, #242426);
+  --surface-2: light-dark(#ebebee, #2c2c2e);
+  --surface-3: light-dark(#e1e1e5, #363638);
+  --muted-foreground: light-dark(#66666b, #98989d);
+  --subtle-foreground: light-dark(#86868b, #6e6e73);
+  --primary: light-dark(#15804a, #2fbf71);
+  --primary-hover: light-dark(#116b3e, #45cc83);
+  --primary-foreground: light-dark(#ffffff, #06120b);
+  --destructive: light-dark(#c4352c, #eb6f66);
+  --destructive-soft: light-dark(rgba(196, 53, 44, 0.09), rgba(235, 111, 102, 0.14));
+  --border: light-dark(#e3e3e6, #38383a);
+  --input: light-dark(#d2d2d7, #48484a);
+  --ring: light-dark(#15804a, #2fbf71);
+  --ring-soft: light-dark(rgba(21, 128, 74, 0.18), rgba(47, 191, 113, 0.22));
+  --sidebar: light-dark(#f3f3f5, #161618);
+  --sidebar-accent: light-dark(#e6e6ea, #2a2a2c);
   --ease: cubic-bezier(0.2, 0, 0, 1);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: light;
-    --background: #fbfbfd;
-    --foreground: #1d1d1f;
-    --surface-1: #f3f3f5;
-    --surface-2: #ebebee;
-    --surface-3: #e1e1e5;
-    --muted-foreground: #66666b;
-    --subtle-foreground: #86868b;
-    --primary: #15804a;
-    --primary-hover: #116b3e;
-    --primary-foreground: #ffffff;
-    --destructive: #c4352c;
-    --destructive-soft: rgba(196, 53, 44, 0.09);
-    --border: #e3e3e6;
-    --input: #d2d2d7;
-    --ring: #15804a;
-    --ring-soft: rgba(21, 128, 74, 0.18);
-    --sidebar: #f3f3f5;
-    --sidebar-accent: #e6e6ea;
-  }
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 /* shadcn roles mapped onto the Retry tokens above, so both modes follow it. */
