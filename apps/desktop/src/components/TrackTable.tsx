@@ -2,18 +2,29 @@ import { Badge } from "@ncm-lite/ui/components/ui/badge";
 import { Button } from "@ncm-lite/ui/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ncm-lite/ui/components/ui/table";
 import { Link } from "@tanstack/react-router";
-import { Ellipsis, Heart, Play } from "lucide-react";
+import { Ellipsis, GripVertical, Heart, Play } from "lucide-react";
 import type { PlaylistSummary, Track } from "../api";
 import { cover, duration } from "../format";
 import { library, useLibrary } from "../library";
 import { player, usePlayer } from "../player";
 import { Artists } from "./Artists";
+import { type Move, useReorder } from "./playlist/reorder";
 import { TrackContextMenu, TrackMoreMenu } from "./TrackMenu";
 
 // Row actions stay out of the way until the row is hovered or focused, so the list reads as names.
 const reveal = "opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100";
 
-export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: PlaylistSummary }) {
+export function TrackTable({
+  tracks,
+  playlist,
+  onReorder,
+}: {
+  tracks: Track[];
+  playlist?: PlaylistSummary;
+  // Given when the rows can be reordered: a playlist the user owns.
+  onReorder?: Move;
+}) {
+  const { dragging, handleProps, dropAt } = useReorder(onReorder);
   const current = usePlayer((s) => s.queue[s.index]?.id);
   const playing = usePlayer((s) => s.playing);
   const liked = useLibrary((s) => s.liked);
@@ -22,7 +33,7 @@ export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: P
       <TableHeader className="[&_tr]:border-0">
         <TableRow className="hover:bg-transparent">
           <TableHead className="text-xs font-normal text-muted-foreground">歌名 / 歌手</TableHead>
-          <TableHead className="w-20">
+          <TableHead className={onReorder ? "w-28" : "w-20"}>
             <span className="sr-only">操作</span>
           </TableHead>
           <TableHead className="w-1/3 text-xs font-normal text-muted-foreground">专辑</TableHead>
@@ -34,11 +45,14 @@ export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: P
           const isCurrent = t.id === current;
           const isLiked = liked.has(t.id);
           return (
-            <TrackContextMenu key={`${t.id}-${i}`} tracks={tracks} index={i} playlist={playlist}>
+            // A playlist holds a song once, so its rows keep their identity (and focus) when they move.
+            <TrackContextMenu key={onReorder ? t.id : `${t.id}-${i}`} tracks={tracks} index={i} playlist={playlist}>
               <TableRow
                 tabIndex={0}
                 aria-current={isCurrent}
-                className="group border-0 hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:-outline-offset-2 aria-[current=true]:bg-muted [&>td:first-child]:rounded-l-lg [&>td:last-child]:rounded-r-lg"
+                data-drop={dropAt(i, tracks.length)}
+                data-dragging={dragging === i || undefined}
+                className="group border-0 hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:-outline-offset-2 aria-[current=true]:bg-muted data-dragging:opacity-50 data-[drop=after]:[&>td]:shadow-[inset_0_-2px_0_var(--primary)] data-[drop=before]:[&>td]:shadow-[inset_0_2px_0_var(--primary)] [&>td:first-child]:rounded-l-lg [&>td:last-child]:rounded-r-lg"
                 onDoubleClick={() => player.playQueue(tracks, i)}
                 onKeyDown={(e) => e.key === "Enter" && e.target === e.currentTarget && player.playQueue(tracks, i)}
               >
@@ -79,12 +93,25 @@ export function TrackTable({ tracks, playlist }: { tracks: Track[]; playlist?: P
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-end gap-1" onDoubleClick={(e) => e.stopPropagation()}>
+                    {onReorder && (
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`拖动排序 ${t.name}，或按上下方向键移动`}
+                        className={`cursor-grab touch-none text-muted-foreground active:cursor-grabbing ${reveal}`}
+                        {...handleProps(i)}
+                      >
+                        <GripVertical />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon-sm"
                       aria-label={isLiked ? "取消喜欢" : "喜欢"}
                       aria-pressed={isLiked}
-                      className={isLiked ? "text-destructive hover:text-destructive" : `text-muted-foreground ${reveal}`}
+                      className={
+                        isLiked ? "text-destructive hover:text-destructive" : `text-muted-foreground ${reveal}`
+                      }
                       onClick={() => library.toggleLike(t.id)}
                     >
                       <Heart className={isLiked ? "fill-current" : undefined} />

@@ -22,8 +22,10 @@ import {
 } from "@ncm-lite/ui/components/ui/dropdown-menu";
 import { useNavigate } from "@tanstack/react-router";
 import type { PlaylistSummary, Track } from "../api";
-import { library, useLibrary } from "../library";
+import { toast } from "sonner";
+import { editable, library, useLibrary } from "../library";
 import { player } from "../player";
+import { failed, openPlaylistDialog } from "./playlist/dialogs";
 
 export type TrackAction =
   | { kind: "item"; label: string; onSelect: () => void }
@@ -37,13 +39,45 @@ export type TrackContext = {
   playlist?: PlaylistSummary;
 };
 
-export function useTrackActions({ tracks, index }: TrackContext): TrackAction[] {
+export function useTrackActions({ tracks, index, playlist }: TrackContext): TrackAction[] {
   const track = tracks[index];
   const liked = useLibrary((s) => s.liked.has(track.id));
+  const me = useLibrary((s) => s.me);
   const navigate = useNavigate();
+  // The liked playlist is left to 喜欢, and the playlist on screen already has the song.
+  const targets = me?.playlists.filter((p) => p.mine && !p.liked && p.id !== playlist?.id) ?? [];
+  const addTo = (pid: number, name: string) =>
+    library.addTracks(pid, [track]).then(
+      () => toast.success(`已添加到「${name}」`),
+      (e) => failed("没能添加到歌单", e),
+    );
   return [
     { kind: "item", label: "播放", onSelect: () => player.playQueue(tracks, index) },
+    { kind: "item", label: "下一首播放", onSelect: () => player.playNext(track) },
     { kind: "item", label: liked ? "取消喜欢" : "喜欢", onSelect: () => library.toggleLike(track.id) },
+    {
+      kind: "sub",
+      label: "添加到歌单",
+      items: [
+        {
+          kind: "item",
+          label: "新建歌单",
+          onSelect: () => openPlaylistDialog({ kind: "create", onCreated: addTo }),
+        },
+        ...(targets.length ? [{ kind: "separator" } satisfies TrackAction] : []),
+        ...targets.map((p): TrackAction => ({ kind: "item", label: p.name, onSelect: () => addTo(p.id, p.name) })),
+      ],
+    },
+    ...(playlist && editable(me, playlist.id)
+      ? [
+          {
+            kind: "item",
+            label: "从歌单中删除",
+            onSelect: () =>
+              library.removeTracks(playlist.id, [track.id]).catch((e) => failed("没能从歌单中删除，已放回", e)),
+          } satisfies TrackAction,
+        ]
+      : []),
     { kind: "separator" },
     ...track.artists
       .filter((a) => a.id)
