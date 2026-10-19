@@ -1,0 +1,29 @@
+[package]
+name = "ncm-lite"
+version = "0.1.0"
+description = "A lightweight NetEase Cloud Music client"
+authors = ["SweetRetry"]
+license = ""
+repository = ""
+edition = "2024"
+rust-version = "1.90"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "ncm_lite_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.7.3", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+tauri = { version = "2.12.4", features = [] }
+aes = "0.9.3"
+ecb = { version = "0.2.1", features = ["alloc"] }
+md5 = { package = "md-5", version = "0.11.0" }
+hex = "0.4.3"
+rand = "0.10.3"
+urlencoding = "2.1.3"
+reqwest = { version = "0.13.5", default-features = false, features = ["rustls", "http2", "charset"] }

@@ -1,0 +1,5 @@
+packages:
+  - apps/*
+  - packages/*
+minimumReleaseAgeExclude:
+  - shadcn@4.22.1

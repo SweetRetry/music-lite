@@ -20,19 +20,23 @@ export type PlaylistSummary = { id: number; name: string; cover: string; trackCo
 export type Playlist = PlaylistSummary & { creator: string; tracks: Track[] };
 export type Me = { uid: number; nickname: string; avatar: string; playlists: PlaylistSummary[]; liked: number[] };
 
+// NetEase hands out http:// media URLs. The packaged app runs on a secure origin where WebKit
+// blocks those, and the same CDNs serve https.
+const https = (url: string | null | undefined) => url?.replace(/^http:\/\//, "https://") ?? "";
+
 const toTrack = (s: any): Track => ({
   id: s.id,
   name: s.name,
   artists: (s.ar ?? []).map((a: any) => a.name).join(" / "),
   album: s.al?.name ?? "",
-  cover: s.al?.picUrl ?? "",
+  cover: https(s.al?.picUrl),
   durationMs: s.dt ?? 0,
 });
 
 const toSummary = (p: any, uid: number): PlaylistSummary => ({
   id: p.id,
   name: p.specialType === 5 ? "我喜欢的音乐" : p.name,
-  cover: p.coverImgUrl,
+  cover: https(p.coverImgUrl),
   trackCount: p.trackCount,
   mine: p.userId === uid,
 });
@@ -47,7 +51,7 @@ export async function me(): Promise<Me> {
   return {
     uid,
     nickname: profile?.nickname ?? "",
-    avatar: profile?.avatarUrl ?? "",
+    avatar: https(profile?.avatarUrl),
     playlists: playlist.map((p: any) => toSummary(p, uid)),
     liked: ids,
   };
@@ -80,7 +84,7 @@ export async function songUrl(id: number): Promise<string | null> {
     level: "exhigh",
     encodeType: "aac",
   });
-  return data[0]?.url ?? null;
+  return data[0]?.url ? https(data[0].url) : null;
 }
 
 export async function daily(): Promise<Track[]> {

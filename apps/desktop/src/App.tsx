@@ -85,7 +85,7 @@ function Sidebar({
   me: Me | null;
   view: View;
   onNavigate: (v: View) => void;
-  searchRef: React.RefObject<HTMLInputElement>;
+  searchRef: React.RefObject<HTMLInputElement | null>;
 }) {
   const [q, setQ] = useState("");
 

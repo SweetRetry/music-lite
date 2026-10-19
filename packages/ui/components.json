@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "base-nova",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/styles/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "lucide",
+  "aliases": {
+    "components": "@ncm-lite/ui/components",
+    "utils": "@ncm-lite/ui/lib/utils",
+    "ui": "@ncm-lite/ui/components/ui",
+    "lib": "@ncm-lite/ui/lib",
+    "hooks": "@ncm-lite/ui/hooks"
+  }
+}
