@@ -1,6 +1,7 @@
 // The three things the lite client does: list my playlists, open one, search. Plus a playable URL.
 // Raw NetEase payloads are normalized here so the UI only ever sees Track and Playlist.
 import { eapi } from "./eapi";
+import { levelOf, type Quality } from "./api/quality";
 
 export type Ref = { id: number; name: string };
 
@@ -84,14 +85,21 @@ export async function search(keyword: string): Promise<Track[]> {
   return (result?.songs ?? []).map(toTrack);
 }
 
+// level is what the server actually served, which can be lower than asked for (no VIP, no such file).
+// br is in bits per second.
+export type SongSource = { url: string; level: string; br: number };
+
 // Returns null when the song has no playable source for this account (region, copyright, removed).
-export async function songUrl(id: number): Promise<string | null> {
+export async function songUrl(id: number, level: Quality): Promise<SongSource | null> {
   const { data } = await eapi("/api/song/enhance/player/url/v1", {
     ids: JSON.stringify([id]),
-    level: "exhigh",
+    level,
     encodeType: "aac",
   });
-  return data[0]?.url ? https(data[0].url) : null;
+  const d = data[0];
+  if (!d?.url) return null;
+  const br = Number(d.br) || 0;
+  return { url: https(d.url), level: levelOf(d.level, br), br };
 }
 
 export async function daily(): Promise<Track[]> {
