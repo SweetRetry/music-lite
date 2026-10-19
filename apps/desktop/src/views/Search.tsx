@@ -8,11 +8,11 @@ export function SearchView({ q }: { q: string }) {
   if (!data) return <Loading />;
   return (
     <>
-      <header className="hero hero--compact">
-        <div className="hero__text">
-          <h1>「{q}」</h1>
-          <p className="meta">{data.length ? `${data.length} 首歌曲，双击播放` : "没有找到相关歌曲，换个关键词试试"}</p>
-        </div>
+      <header className="flex flex-col gap-1 pb-8">
+        <h1 className="truncate text-2xl font-semibold tracking-tight">「{q}」</h1>
+        <p className="text-sm text-muted-foreground">
+          {data.length ? `${data.length} 首` : "没有找到相关歌曲，换个关键词试试"}
+        </p>
       </header>
       {data.length > 0 && <TrackTable tracks={data} />}
     </>

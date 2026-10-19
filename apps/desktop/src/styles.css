@@ -37,18 +37,18 @@ a {
   text-underline-offset: 2px;
 }
 
-/* In the base layer so Tailwind utilities (shadcn buttons) can override it. */
+/* In the base layer so Tailwind utilities (shadcn components) can override them. */
 @layer base {
   button {
     border: 0;
     background: none;
     cursor: pointer;
   }
-}
 
-:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
 }
 
 img {
@@ -212,152 +212,10 @@ img {
 
 /* Header */
 
-.hero {
-  display: flex;
-  align-items: flex-end;
-  gap: 24px;
-  margin-bottom: 32px;
-}
-
 .hero__cover {
   width: 120px;
   height: 120px;
   border-radius: 12px;
-}
-
-.hero__text h1 {
-  font-size: 28px;
-  line-height: 34px;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-  text-wrap: balance;
-}
-
-.hero__text .meta {
-  color: var(--muted-foreground);
-  margin: 4px 0 16px;
-}
-
-.hero--compact .meta {
-  margin-bottom: 0;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 14px;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: background-color 150ms var(--ease);
-}
-
-.btn--primary {
-  background: var(--primary);
-  color: var(--primary-foreground);
-}
-
-.btn--primary:hover {
-  background: var(--primary-hover);
-}
-
-.btn:disabled {
-  background: var(--surface-1);
-  color: var(--subtle-foreground);
-  cursor: default;
-}
-
-/* Track table */
-
-.tracks {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  font-size: 13px;
-  line-height: 18px;
-}
-
-.tracks th {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--subtle-foreground);
-  text-align: left;
-  padding: 0 12px 8px;
-  border-bottom: 1px solid var(--border);
-}
-
-.tracks th:nth-child(1) {
-  width: 48px;
-}
-.tracks th:nth-child(2) {
-  width: 40%;
-}
-.tracks th:nth-child(5) {
-  width: 44px;
-}
-.tracks th:nth-child(6) {
-  width: 72px;
-}
-
-/* The row heart stays out of the way until the row is hovered or the song is liked. */
-.tracks .like {
-  opacity: 0;
-}
-.tracks tr:hover .like,
-.tracks tr:focus-within .like,
-.tracks .like[aria-pressed="true"] {
-  opacity: 1;
-}
-
-.tracks td {
-  height: 44px;
-  padding: 0 12px;
-  border-bottom: 1px solid var(--border);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  cursor: default;
-  user-select: none;
-}
-
-.tracks tbody tr {
-  transition: background-color 150ms var(--ease);
-}
-
-.tracks tbody tr:hover {
-  background: var(--surface-1);
-}
-
-.tracks tbody tr:focus-visible {
-  outline-offset: -2px;
-}
-
-.tracks tbody tr[aria-current="true"] {
-  background: var(--surface-2);
-}
-
-.tracks td.num {
-  color: var(--subtle-foreground);
-}
-
-.title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.title img {
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
-  flex: none;
-}
-
-.title span {
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* Now playing marker: three bars, the view's one emerald moment. */
@@ -605,17 +463,6 @@ button:disabled {
   font-variant-numeric: tabular-nums;
 }
 
-.tag {
-  flex: none;
-  padding: 0 4px;
-  border-radius: 4px;
-  box-shadow: inset 0 0 0 1px var(--destructive);
-  color: var(--destructive);
-  font-size: 10px;
-  line-height: 14px;
-  font-weight: 600;
-}
-
 .day-tile--liked,
 .day-cover--liked {
   color: var(--destructive);
@@ -624,18 +471,6 @@ button:disabled {
 .day-cover--liked svg {
   width: 48px;
   height: 48px;
-}
-
-.hero__actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.reason {
-  flex: none;
-  font-size: 12px;
-  color: var(--subtle-foreground);
 }
 
 /* Lyrics */

@@ -1,8 +1,9 @@
+import { Button } from "@ncm-lite/ui/components/ui/button";
+import { Play } from "lucide-react";
 import type { Track } from "../api";
-import { Icon } from "../icons";
 import { player } from "../player";
 
-// Page header shared by every track list: art on the left, title, meta and play-all on the right.
+// Page header shared by every track list: art, title, one line of meta, and play-all as the one primary action.
 export function Hero({
   art,
   title,
@@ -17,16 +18,18 @@ export function Hero({
   children?: React.ReactNode;
 }) {
   return (
-    <header className="hero">
+    <header className="flex items-end gap-6 pb-8">
       {art}
-      <div className="hero__text">
-        <h1>{title}</h1>
-        <p className="meta">{meta}</p>
-        <div className="hero__actions">
-          <button className="btn btn--primary" disabled={!tracks.length} onClick={() => player.playQueue(tracks, 0)}>
-            <Icon name="play" />
+      <div className="flex min-w-0 flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-1">
+          <h1 className="truncate text-2xl font-semibold tracking-tight">{title}</h1>
+          <p className="truncate text-sm text-muted-foreground">{meta}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button size="lg" disabled={!tracks.length} onClick={() => player.playQueue(tracks, 0)}>
+            <Play className="fill-current" />
             播放全部
-          </button>
+          </Button>
           {children}
         </div>
       </div>
