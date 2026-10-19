@@ -28,3 +28,15 @@ const BY_BITRATE: [number, string][] = [
 ];
 export const levelOf = (level: unknown, br: number) =>
   typeof level === "string" && level ? level : (BY_BITRATE.find(([min]) => br >= min)?.[1] ?? "standard");
+
+// Bitrate (bits per second) the server lists for each level in a privilege's chargeInfoList.
+export const RATE: Record<Quality, number> = {
+  standard: 128000,
+  higher: 192000,
+  exhigh: 320000,
+  lossless: 999000,
+  hires: 1999000,
+};
+
+// Levels that need 黑胶VIP even for a free song. Shown before any song is loaded.
+export const VIP_LEVELS: ReadonlySet<string> = new Set<Quality>(["lossless", "hires"]);

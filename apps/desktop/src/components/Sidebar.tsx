@@ -19,10 +19,10 @@ import { Account } from "./Account";
 import { PlaylistContextMenu } from "./playlist/actions";
 import { openPlaylistDialog } from "./playlist/dialogs";
 
-// Links mark themselves aria-current="page". Hover is sidebar-accent; the current route is the NCM red
-// pill, which aria variants keep over hover and press. Press nudges the row instead of a third fill.
+// Links mark themselves aria-current="page". Hover is sidebar-accent; the current route is a light red
+// tint with red text, which aria variants keep over hover and press. Press nudges the row instead of a third fill.
 const item =
-  "h-10 gap-3 transition-transform active:scale-[0.98] aria-[current=page]:bg-sidebar-primary aria-[current=page]:font-medium aria-[current=page]:text-sidebar-primary-foreground";
+  "h-10 gap-3 transition-transform active:scale-[0.98] aria-[current=page]:bg-sidebar-primary/10 aria-[current=page]:font-medium aria-[current=page]:text-sidebar-primary dark:aria-[current=page]:bg-sidebar-primary/15";
 // Glyph slot the same size as a playlist cover, so labels line up. No resting fill: a chip would melt into the hover row.
 const glyph = "grid size-7 shrink-0 place-items-center";
 
@@ -55,7 +55,7 @@ export function Sidebar() {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton className={item} render={<Link to="/liked" />}>
-                <span className={`${glyph} text-primary group-aria-[current=page]/menu-button:text-current`}>
+                <span className={`${glyph} text-primary`}>
                   <HeartIcon weight="fill" className="size-5!" />
                 </span>
                 <span>我喜欢的音乐</span>
