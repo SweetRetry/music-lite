@@ -20,6 +20,7 @@ import { Artists } from "./Artists";
 import { LikeHeart } from "./LikeHeart";
 import { QualityMenu } from "./player/QualityMenu";
 import { QueuePanel } from "./player/QueuePanel";
+import { PlaybackModeMenu } from "./player/PlaybackModeMenu";
 import { Range } from "./Range";
 import { Tip } from "./ShortcutKeys";
 
@@ -95,7 +96,8 @@ export function PlayerBar() {
         )}
       </div>
       <div className="player__center">
-        <div className="player__controls">
+        <div className="player__controls relative">
+          <div className="absolute right-full mr-3"><PlaybackModeMenu /></div>
           <Tip
             label="上一首"
             id="prev"
@@ -138,7 +140,7 @@ export function PlayerBar() {
         </div>
       </div>
       <div className="player__volume">
-        {here && service.privilege && <QualityMenu />}
+        {here && service.qualities.length > 0 && <QualityMenu />}
         <QueuePanel />
         <Tip
           label={muted ? "取消静音" : "静音"}
