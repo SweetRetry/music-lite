@@ -1,8 +1,8 @@
 // Signed out of every service. NetEase Music: a QR code to scan in its phone app, or, on a Mac with the official
 // client signed in, that login borrowed. QQ Music has no sign-in of its own: it uses the one of its Mac client,
 // so a signed-in QQ Music takes the screen before this shows.
-import { Button } from "@ncm-lite/ui/components/ui/button";
-import { Skeleton } from "@ncm-lite/ui/components/ui/skeleton";
+import { Button } from "@music-lite/ui/components/ui/button";
+import { Skeleton } from "@music-lite/ui/components/ui/skeleton";
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
 import { renderSVG } from "uqr";

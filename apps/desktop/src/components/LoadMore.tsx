@@ -1,4 +1,4 @@
-import { Button } from "@ncm-lite/ui/components/ui/button";
+import { Button } from "@music-lite/ui/components/ui/button";
 import { useEffect, useRef, useState } from "react";
 
 // A list that grows a page at a time. `initial` is the page the view already has, and `load(begin)` returns the

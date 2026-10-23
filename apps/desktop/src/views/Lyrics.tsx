@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@ncm-lite/ui/components/ui/button";
+import { Button } from "@music-lite/ui/components/ui/button";
 import { CaretDownIcon } from "@phosphor-icons/react";
-import { Skeleton } from "@ncm-lite/ui/components/ui/skeleton";
+import { Skeleton } from "@music-lite/ui/components/ui/skeleton";
 import { type LyricLine, type Track, srcOf } from "../api";
 import { peek, put } from "../cache";
 import { scoped } from "../mode";

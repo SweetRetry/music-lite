@@ -1,5 +1,5 @@
 import { Autocomplete } from "@base-ui/react/autocomplete";
-import { Avatar, AvatarFallback, AvatarImage } from "@ncm-lite/ui/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@music-lite/ui/components/ui/avatar";
 import {
   ComboboxCollection,
   ComboboxContent,
@@ -8,9 +8,9 @@ import {
   ComboboxItem,
   ComboboxLabel,
   ComboboxList,
-} from "@ncm-lite/ui/components/ui/combobox";
-import { InputGroupAddon } from "@ncm-lite/ui/components/ui/input-group";
-import { Kbd } from "@ncm-lite/ui/components/ui/kbd";
+} from "@music-lite/ui/components/ui/combobox";
+import { InputGroupAddon } from "@music-lite/ui/components/ui/input-group";
+import { Kbd } from "@music-lite/ui/components/ui/kbd";
 import { useNavigate } from "@tanstack/react-router";
 import { MagnifyingGlassIcon, VinylRecordIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";

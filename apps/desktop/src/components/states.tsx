@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { peek, put } from "../cache";
-import { Button } from "@ncm-lite/ui/components/ui/button";
+import { Button } from "@music-lite/ui/components/ui/button";
 import { library } from "../library";
 import { PROVIDER_IDS } from "../mode";
 import { providers, useProvider } from "../providers";

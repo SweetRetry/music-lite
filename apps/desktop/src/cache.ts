@@ -4,7 +4,7 @@
 
 type Entry = { at: number; data: unknown };
 
-const DB = "ncm-cache";
+const DB = "music-lite-cache";
 const STORE = "entries";
 // Oldest entries beyond this are dropped at startup. Big playlists dominate the size, so keep it modest.
 const LIMIT = 80;

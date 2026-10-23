@@ -1,6 +1,6 @@
 // Our own title bar. macOS keeps the native traffic lights (titleBarStyle "Overlay"), which sit over
 // the sidebar column, so the left padding clears them. The bar itself is the drag region.
-import { Button } from "@ncm-lite/ui/components/ui/button";
+import { Button } from "@music-lite/ui/components/ui/button";
 import { useCanGoBack, useRouter } from "@tanstack/react-router";
 import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";

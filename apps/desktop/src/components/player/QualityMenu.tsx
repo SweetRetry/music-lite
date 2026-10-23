@@ -1,6 +1,6 @@
 // Sound quality picker. The trigger shows what is really playing, which can be below the chosen level.
-import { Badge } from "@ncm-lite/ui/components/ui/badge";
-import { Button } from "@ncm-lite/ui/components/ui/button";
+import { Badge } from "@music-lite/ui/components/ui/badge";
+import { Button } from "@music-lite/ui/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +10,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@ncm-lite/ui/components/ui/dropdown-menu";
+} from "@music-lite/ui/components/ui/dropdown-menu";
 import { LockSimpleIcon } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import type { Privilege } from "../../api/privilege";

@@ -1,6 +1,6 @@
-# NCM Lite
+# Music Lite
 
-A lightweight NetEase Cloud Music desktop client. Tauri 2 + React 19, pnpm + turborepo.
+A lightweight NetEase Cloud Music and QQ Music desktop client. Tauri 2 + React 19, pnpm + turborepo.
 
 ## Layout
 
@@ -15,7 +15,7 @@ A lightweight NetEase Cloud Music desktop client. Tauri 2 + React 19, pnpm + tur
 ## Conventions
 
 - Use a shadcn component wherever one fits (Button, Dialog, DropdownMenu, Sheet, Popover, Tooltip, Badge, Avatar, ScrollArea, Skeleton, ...). Do not build your own. Hand-roll only when shadcn has nothing for it.
-- Add UI components only with the shadcn CLI, run inside `packages/ui`: `pnpm dlx shadcn@latest add <name>`. Never hand-write them. Import as `@ncm-lite/ui/components/ui/<name>`.
+- Add UI components only with the shadcn CLI, run inside `packages/ui`: `pnpm dlx shadcn@latest add <name>`. Never hand-write them. Import as `@music-lite/ui/components/ui/<name>`.
 - Existing screens use the plain CSS in `apps/desktop/src/styles.css` with the Retry tokens. New UI uses Tailwind utilities and shadcn components with the same tokens (`bg-background`, `text-muted-foreground`, `border-border`).
 - Menus are as wide as their labels, one line per item, and long labels truncate. `packages/ui` dropdown and context menus default to this (`w-auto min-w-44 max-w-80 whitespace-nowrap`). The stock shadcn dropdown follows the trigger width, which wraps every label under a small trigger, so keep the default if `shadcn add` offers to overwrite it.
 - Official endpoints declared with `nginxCache` (`/api/album/v3/detail`, `/api/artist/v3/detail`, `/api/playlist/v4/detail`) need a `cache_key` signed by the official native layer and return 400 without it. Use the v1 equivalents (`/api/v1/album/{id}`, `/api/v1/artist/{id}`, `/api/v6/playlist/detail`).

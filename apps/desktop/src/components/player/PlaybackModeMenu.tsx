@@ -1,4 +1,4 @@
-import { Button } from "@ncm-lite/ui/components/ui/button";
+import { Button } from "@music-lite/ui/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,7 +7,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "@ncm-lite/ui/components/ui/dropdown-menu";
+} from "@music-lite/ui/components/ui/dropdown-menu";
 import { RepeatIcon, RepeatOnceIcon, ShuffleIcon } from "@phosphor-icons/react";
 import { PLAYBACK_MODES, player, usePlayer } from "../../player";
 import { Tip } from "../ShortcutKeys";

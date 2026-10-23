@@ -1,7 +1,7 @@
 // The play queue as a popover above the player bar: jump, remove, clear.
-import { Button } from "@ncm-lite/ui/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@ncm-lite/ui/components/ui/popover";
-import { ScrollArea } from "@ncm-lite/ui/components/ui/scroll-area";
+import { Button } from "@music-lite/ui/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@music-lite/ui/components/ui/popover";
+import { ScrollArea } from "@music-lite/ui/components/ui/scroll-area";
 import { QueueIcon, XIcon } from "@phosphor-icons/react";
 import { artistNames, cover, duration } from "../../format";
 import { player, usePlayer } from "../../player";

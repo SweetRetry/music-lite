@@ -1,5 +1,5 @@
-import { Button } from "@ncm-lite/ui/components/ui/button";
-import { Collapsible, CollapsibleTrigger } from "@ncm-lite/ui/components/ui/collapsible";
+import { Button } from "@music-lite/ui/components/ui/button";
+import { Collapsible, CollapsibleTrigger } from "@music-lite/ui/components/ui/collapsible";
 import { useLayoutEffect, useRef, useState } from "react";
 
 // Long text collapsed to two lines. The 展开 toggle only appears when the text actually overflows.

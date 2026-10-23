@@ -1,5 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@ncm-lite/ui/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ncm-lite/ui/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@music-lite/ui/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@music-lite/ui/components/ui/tabs";
 import { Description } from "../components/album/Description";
 import { AlbumGrid } from "../components/artist/AlbumGrid";
 import { Hero } from "../components/Hero";

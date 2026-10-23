@@ -1,4 +1,4 @@
-import "@ncm-lite/ui/globals.css";
+import "@music-lite/ui/globals.css";
 import "./styles.css";
 import { RouterProvider } from "@tanstack/react-router";
 import { createRoot } from "react-dom/client";

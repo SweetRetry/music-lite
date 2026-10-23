@@ -1,6 +1,6 @@
 // Loading placeholders that copy the real layout (Hero, TrackTable, AlbumGrid), so nothing moves when data lands.
-import { Skeleton } from "@ncm-lite/ui/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ncm-lite/ui/components/ui/table";
+import { Skeleton } from "@music-lite/ui/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@music-lite/ui/components/ui/table";
 
 // Fixed widths, varied per row, so the list looks like text without a random value changing between renders.
 const NAMES = ["w-40", "w-56", "w-32", "w-48", "w-36", "w-52", "w-44", "w-28", "w-60", "w-38"];

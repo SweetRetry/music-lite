@@ -1,5 +1,5 @@
 // The cheatsheet. It renders the keymap, so it can never list a shortcut that does not exist.
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@ncm-lite/ui/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@music-lite/ui/components/ui/dialog";
 import { Fragment } from "react";
 import { grouped } from "../shortcuts";
 import { useUi } from "../ui";

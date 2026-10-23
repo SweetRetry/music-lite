@@ -1,5 +1,5 @@
-import { SidebarProvider } from "@ncm-lite/ui/components/ui/sidebar";
-import { Toaster } from "@ncm-lite/ui/components/ui/sonner";
+import { SidebarProvider } from "@music-lite/ui/components/ui/sidebar";
+import { Toaster } from "@music-lite/ui/components/ui/sonner";
 import { Outlet } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PlayerBar } from "./components/PlayerBar";

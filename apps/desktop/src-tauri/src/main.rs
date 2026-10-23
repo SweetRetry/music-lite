@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-  ncm_lite_lib::run();
+  music_lite_lib::run();
 }

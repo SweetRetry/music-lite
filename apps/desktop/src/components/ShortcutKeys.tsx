@@ -1,6 +1,6 @@
 // Draws a chord from the keymap as key caps, and a tooltip that appends a shortcut's first chord.
-import { Kbd, KbdGroup } from "@ncm-lite/ui/components/ui/kbd";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@ncm-lite/ui/components/ui/tooltip";
+import { Kbd, KbdGroup } from "@music-lite/ui/components/ui/kbd";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@music-lite/ui/components/ui/tooltip";
 import { caps, primaryChord, type ShortcutId } from "../shortcuts";
 
 export function Keys({ chord }: { chord: string }) {

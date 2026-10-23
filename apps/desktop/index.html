@@ -7,7 +7,7 @@
     <script>
       // Apply the saved theme and brand before first paint. Keep the keys in sync with src/theme.ts and src/mode.ts.
       try {
-        var t = localStorage.getItem("ncm-theme");
+        var t = localStorage.getItem("music-lite-theme");
         var dark = t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
         if (dark) document.documentElement.classList.add("dark");
         document.documentElement.dataset.brand = localStorage.getItem("mode") === "qq" ? "qq" : "ncm";

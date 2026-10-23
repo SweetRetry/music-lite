@@ -1,5 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@ncm-lite/ui/components/ui/avatar";
-import { Badge } from "@ncm-lite/ui/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@music-lite/ui/components/ui/avatar";
+import { Badge } from "@music-lite/ui/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +9,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "@ncm-lite/ui/components/ui/dropdown-menu";
+} from "@music-lite/ui/components/ui/dropdown-menu";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import type { Me } from "../api";

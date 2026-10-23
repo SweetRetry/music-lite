@@ -1,5 +1,5 @@
 // One click steps through the three modes. The icon shows the mode in effect, the tooltip names it.
-import { Button } from "@ncm-lite/ui/components/ui/button";
+import { Button } from "@music-lite/ui/components/ui/button";
 import { DesktopIcon, MoonIcon, SunIcon } from "@phosphor-icons/react";
 import { type Theme, useTheme } from "../theme";
 import { Tip } from "./ShortcutKeys";

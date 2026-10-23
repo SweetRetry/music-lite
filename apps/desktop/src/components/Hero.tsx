@@ -1,4 +1,4 @@
-import { Button } from "@ncm-lite/ui/components/ui/button";
+import { Button } from "@music-lite/ui/components/ui/button";
 import { PlayIcon } from "@phosphor-icons/react";
 import type { Track } from "../api";
 import { player } from "../player";

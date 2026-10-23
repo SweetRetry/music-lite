@@ -1,5 +1,5 @@
 {
-  "name": "ncm-lite",
+  "name": "music-lite",
   "private": true,
   "packageManager": "pnpm@12.5.1",
   "scripts": {

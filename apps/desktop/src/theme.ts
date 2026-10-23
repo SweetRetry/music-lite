@@ -9,7 +9,7 @@ import { useMode } from "./mode";
 
 export type Theme = "system" | "light" | "dark";
 
-const KEY = "ncm-theme";
+const KEY = "music-lite-theme";
 
 function load(): Theme {
   try {

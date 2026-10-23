@@ -1,7 +1,7 @@
-import { Badge } from "@ncm-lite/ui/components/ui/badge";
-import { Button } from "@ncm-lite/ui/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ncm-lite/ui/components/ui/table";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@ncm-lite/ui/components/ui/tooltip";
+import { Badge } from "@music-lite/ui/components/ui/badge";
+import { Button } from "@music-lite/ui/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@music-lite/ui/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@music-lite/ui/components/ui/tooltip";
 import { Link } from "@tanstack/react-router";
 import { CrosshairIcon, DotsThreeIcon, PlayIcon } from "@phosphor-icons/react";
 import { type PlaylistSummary, type Track, pageId } from "../api";

@@ -6,23 +6,23 @@ import { useRender } from "@base-ui/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 
-import { useIsMobile } from "@ncm-lite/ui/hooks/use-mobile"
-import { Button } from "@ncm-lite/ui/components/ui/button"
-import { Input } from "@ncm-lite/ui/components/ui/input"
-import { Separator } from "@ncm-lite/ui/components/ui/separator"
+import { useIsMobile } from "@music-lite/ui/hooks/use-mobile"
+import { Button } from "@music-lite/ui/components/ui/button"
+import { Input } from "@music-lite/ui/components/ui/input"
+import { Separator } from "@music-lite/ui/components/ui/separator"
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@ncm-lite/ui/components/ui/sheet"
-import { Skeleton } from "@ncm-lite/ui/components/ui/skeleton"
+} from "@music-lite/ui/components/ui/sheet"
+import { Skeleton } from "@music-lite/ui/components/ui/skeleton"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@ncm-lite/ui/components/ui/tooltip"
+} from "@music-lite/ui/components/ui/tooltip"
 import { SidebarIcon } from "@phosphor-icons/react"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"

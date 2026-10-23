@@ -1,6 +1,6 @@
 // What you can do to a whole playlist, defined once and rendered as the sidebar's right-click
 // menu and the playlist page's … menu.
-import { Button } from "@ncm-lite/ui/components/ui/button";
+import { Button } from "@music-lite/ui/components/ui/button";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -8,7 +8,7 @@ import {
   ContextMenuSeparator,
   ContextMenuShortcut,
   ContextMenuTrigger,
-} from "@ncm-lite/ui/components/ui/context-menu";
+} from "@music-lite/ui/components/ui/context-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
-} from "@ncm-lite/ui/components/ui/dropdown-menu";
+} from "@music-lite/ui/components/ui/dropdown-menu";
 import {
   DotsThreeIcon,
   BroomIcon,

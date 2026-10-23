@@ -10,7 +10,7 @@ const source = fileURLToPath(new URL("../apps/desktop/src-tauri/target/release/b
 const target = "/Applications/Music Lite.app";
 const info = JSON.parse(execFileSync("plutil", ["-convert", "json", "-o", "-", `${source}/Contents/Info.plist`], { encoding: "utf8" }));
 assert.equal(info.CFBundleName, "Music Lite");
-assert.equal(info.CFBundleIdentifier, "com.sweetretry.ncmlite");
+assert.equal(info.CFBundleIdentifier, "com.sweetretry.musiclite");
 const executable = `Contents/MacOS/${info.CFBundleExecutable}`;
 const running = execFileSync("ps", ["-ax", "-o", "pid=,command="], { encoding: "utf8" })
   .split("\n").map((line) => line.trim().match(/^(\d+)\s+(.+)$/))

@@ -8,8 +8,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@ncm-lite/ui/components/ui/sidebar";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@ncm-lite/ui/components/ui/tooltip";
+} from "@music-lite/ui/components/ui/sidebar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@music-lite/ui/components/ui/tooltip";
 import { Link } from "@tanstack/react-router";
 import { CalendarBlankIcon, HeartIcon, PlusIcon } from "@phosphor-icons/react";
 import type { PlaylistSummary } from "../api";

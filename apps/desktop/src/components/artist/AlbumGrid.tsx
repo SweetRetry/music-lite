@@ -1,4 +1,4 @@
-import { Card } from "@ncm-lite/ui/components/ui/card";
+import { Card } from "@music-lite/ui/components/ui/card";
 import { Link } from "@tanstack/react-router";
 import type { AlbumCard } from "../../api/album";
 import { cover } from "../../format";

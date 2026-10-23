@@ -10,8 +10,8 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-} from "@ncm-lite/ui/components/ui/alert-dialog";
-import { Button } from "@ncm-lite/ui/components/ui/button";
+} from "@music-lite/ui/components/ui/alert-dialog";
+import { Button } from "@music-lite/ui/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -19,7 +19,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@ncm-lite/ui/components/ui/dialog";
+} from "@music-lite/ui/components/ui/dialog";
 import {
   Field,
   FieldContent,
@@ -27,9 +27,9 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@ncm-lite/ui/components/ui/field";
-import { Input } from "@ncm-lite/ui/components/ui/input";
-import { Switch } from "@ncm-lite/ui/components/ui/switch";
+} from "@music-lite/ui/components/ui/field";
+import { Input } from "@music-lite/ui/components/ui/input";
+import { Switch } from "@music-lite/ui/components/ui/switch";
 import { BroomIcon, TrashIcon } from "@phosphor-icons/react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";

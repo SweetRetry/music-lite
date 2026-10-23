@@ -9,7 +9,7 @@ import {
   ContextMenuSubContent,
   ContextMenuSubTrigger,
   ContextMenuTrigger,
-} from "@ncm-lite/ui/components/ui/context-menu";
+} from "@music-lite/ui/components/ui/context-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +19,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@ncm-lite/ui/components/ui/dropdown-menu";
+} from "@music-lite/ui/components/ui/dropdown-menu";
 import {
   HeartBreakIcon,
   HeartIcon,

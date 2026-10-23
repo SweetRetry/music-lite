@@ -28,10 +28,10 @@ print(json.dumps(dict(uin=str(ref(user.get('strUserAccount')) or ref(user.get('n
 function ncmSession() {
   let stored = { kind: "official" };
   try {
-    stored = JSON.parse(readFileSync(`${homedir()}/Library/Application Support/com.sweetretry.ncmlite/login.json`, "utf8"));
+    stored = JSON.parse(readFileSync(`${homedir()}/Library/Application Support/com.sweetretry.musiclite/login.json`, "utf8"));
   } catch {}
   if (stored.kind === "own") return stored;
-  if (stored.kind === "signedout") throw new Error("NCM Lite is signed out");
+  if (stored.kind === "signedout") throw new Error("Music Lite is signed out");
   const buf = readFileSync(`${homedir()}/Library/HTTPStorages/com.netease.163music.binarycookies`);
   if (buf.subarray(0, 4).toString() !== "cook") throw new Error("Invalid official NetEase cookie file");
   const cookies = [];
