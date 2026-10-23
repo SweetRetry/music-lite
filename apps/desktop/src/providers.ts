@@ -5,7 +5,7 @@ import * as albums from "./api/album";
 import * as artists from "./api/artist";
 import * as pl from "./api/playlists";
 import { type Privilege, privilege } from "./api/privilege";
-import type { Quality } from "./api/quality";
+import { QUALITIES, type Quality, type QualityOption } from "./api/quality";
 import * as qq from "./api/qq";
 import { type SuggestionGroup, suggest } from "./api/suggest";
 import { type Vip, vip } from "./api/vip";
@@ -40,13 +40,14 @@ export type Provider = {
   // Suggestions under the search box while typing.
   suggest?: (keyword: string) => Promise<SuggestionGroup[]>;
   songUrl: (track: api.Track, quality: Quality) => Promise<api.SongSource | null>;
+  qualities: readonly QualityOption[];
   lyric: (track: api.Track) => Promise<api.LyricLine[]>;
   // Addressed by what pageId gives: the numeric id of NetEase, the mid of QQ Music.
   artist: (id: string) => Promise<artists.Artist>;
   album: (id: string) => Promise<albums.Album>;
   // The membership badge.
   vip?: () => Promise<Vip | null>;
-  // Which sound qualities a song offers this account. A service without it has no choice of quality.
+  // Which sound qualities a song offers this account.
   privilege?: (track: api.Track) => Promise<Privilege | null>;
   // The pages of an artist after the first one the artist call returns. Absent where the service has none.
   artistSongs?: (id: string, begin: number) => Promise<api.Track[]>;
@@ -72,6 +73,7 @@ const ncm: Provider = {
   removeTracks: (id, tracks) => pl.removeTracks(id, tracks.map((t) => t.id)),
   search: api.search,
   songUrl: (track, quality) => api.songUrl(track.id, quality),
+  qualities: QUALITIES,
   lyric: (track) => api.lyric(track.id),
   suggest,
   artist: artists.artist,
@@ -97,7 +99,11 @@ const qqMusic: Provider = {
   addTracks: qq.addTracks,
   removeTracks: qq.removeTracks,
   search: qq.search,
-  songUrl: (track) => qq.songUrl(track),
+  suggest: qq.suggest,
+  songUrl: qq.songUrl,
+  qualities: qq.QUALITIES,
+  privilege: qq.privilege,
+  vip: qq.vip,
   lyric: qq.lyric,
   artist: qq.artist,
   album: qq.album,

@@ -1,10 +1,13 @@
 // QQ Music, normalized to the same Track, Playlist and Me as NetEase so the UI never sees the difference.
 // The calls are the ones the QQ Music Mac client makes (module and method names come from its binary).
-import { invoke } from "@tauri-apps/api/core";
 import { type LyricLine, type Me, type Playlist, type PlaylistSummary, type SongSource, type Track, https, parseLrc } from "../api";
-import { qqapi } from "../qqapi";
+import { qqapi, qqInvoke } from "../qqapi";
 import type { Album, AlbumCard } from "./album";
 import type { Artist } from "./artist";
+import type { Privilege } from "./privilege";
+import { qualityFor, rank, type Quality, type QualityOption } from "./quality";
+import type { SuggestionGroup } from "./suggest";
+import type { Vip } from "./vip";
 
 // dirId 201 is the 我喜欢 folder of every account.
 const LIKED_DIR = 201;
@@ -24,8 +27,8 @@ export const toTrack = (s: any): Track => ({
   vip: s.pay?.pay_play === 1,
 });
 
-// A signed-out client and an unreadable one both mean there is no login to use. The login screen says which.
-const uin = () => invoke<string | null>("qq_login").catch(() => null);
+// An unreadable login must retain its permission error instead of looking signed out.
+const uin = () => qqInvoke<string | null>("qq_login");
 
 export const signedIn = async () => !!(await uin());
 
@@ -58,7 +61,8 @@ const PAGE = 1000;
 async function diss(tid: number, begin: number) {
   return qqapi("music.srfDissInfo.DissInfo", "CgiGetDiss", {
     disstid: tid,
-    onlysonglist: 1,
+    // Only the first page supplies the header. Song-only responses leave its fields empty.
+    onlysonglist: begin === 0 ? 0 : 1,
     song_begin: begin,
     song_num: PAGE,
     userinfo: 1,
@@ -174,32 +178,87 @@ export const remove = async (tid: number) =>
     dirId: (await folderOf((f) => f.tid === tid)).dirId,
   }));
 
-// Files in the order they are tried: 320k mp3, 128k mp3, 128k aac. The server leaves the address empty for
-// the ones this account cannot play, and the first with an address wins.
+export const QUALITIES = [
+  { level: "standard", label: "标准" },
+  { level: "exhigh", label: "高品质" },
+  { level: "lossless", label: "无损" },
+  { level: "hires", label: "Hi-Res" },
+] as const satisfies readonly QualityOption[];
+
 const FILES = [
-  { prefix: "M800", ext: "mp3", level: "exhigh", br: 320000 },
-  { prefix: "M500", ext: "mp3", level: "standard", br: 128000 },
-  { prefix: "C400", ext: "m4a", level: "standard", br: 128000 },
+  { prefix: "RS01", ext: "flac", level: "hires", size: "size_hires" },
+  { prefix: "F000", ext: "flac", level: "lossless", size: "size_flac" },
+  { prefix: "M800", ext: "mp3", level: "exhigh", size: "size_320mp3" },
+  { prefix: "M500", ext: "mp3", level: "standard", size: "size_128mp3" },
+  { prefix: "C400", ext: "m4a", level: "standard", size: "size_96aac" },
 ] as const;
 
-// Returns null when no file has an address: a song the account cannot play, or one taken down.
-export async function songUrl(track: Track): Promise<SongSource | null> {
-  const mid = track.mid;
-  const id = await uin();
-  if (!mid || !id) return null;
-  const { sip, midurlinfo } = await qqapi("music.vkey.GetVkey", "UrlGetVkey", {
+type SongDetail = { track_info?: { interval: number; file?: { media_mid?: string } & Record<string, unknown> } };
+type Vkeys = { sip?: string[]; midurlinfo?: { filename: string; purl: string }[] };
+
+// A vkey can exist even for a nonexistent file. The song's file sizes must gate every candidate first.
+async function sources(track: Track, quality: Quality) {
+  if (!track.mid) return [];
+  const [id, detail] = await Promise.all([
+    uin(),
+    qqapi<SongDetail>("music.pf_song_detail_svr", "get_song_detail_yqq", { song_mid: track.mid }),
+  ]);
+  if (!id) return [];
+  const info = detail.track_info;
+  const media = info?.file?.media_mid ?? track.mid;
+  const files = FILES.filter((f) => rank(f.level) <= rank(quality) && Number(info?.file?.[f.size]) > 0)
+    .map((f) => ({ ...f, filename: `${f.prefix}${media}${media}.${f.ext}` }));
+  if (!files.length) return [];
+  const { sip, midurlinfo } = await qqapi<Vkeys>("music.vkey.GetVkey", "UrlGetVkey", {
     guid: "10000",
-    songmid: FILES.map(() => mid),
-    songtype: FILES.map(() => 0),
+    songmid: files.map(() => track.mid),
+    songtype: files.map(() => 0),
     uin: id,
     loginflag: 1,
     platform: "20",
-    filename: FILES.map((f) => `${f.prefix}${mid}${mid}.${f.ext}`),
+    filename: files.map((f) => f.filename),
   });
-  const at = (midurlinfo as { purl: string }[]).findIndex((m) => m.purl);
-  if (at < 0) return null;
-  const { level, br } = FILES[at];
-  return { url: https(sip[0] + midurlinfo[at].purl), level, br };
+  return files.map((f) => {
+    const purl = midurlinfo?.find((m) => m.filename === f.filename)?.purl;
+    return {
+      level: f.level,
+      br: info?.interval ? Math.round(Number(info.file?.[f.size]) * 8 / info.interval) : 0,
+      url: purl && sip?.[0] ? https(new URL(purl, sip[0]).href) : "",
+    };
+  });
+}
+
+// Try the chosen tier and then lower files that both exist and are playable by this account.
+export async function songUrl(track: Track, quality: Quality): Promise<SongSource | null> {
+  return (await sources(track, qualityFor(quality, QUALITIES))).find((s) => s.url) ?? null;
+}
+
+export async function privilege(track: Track): Promise<Privilege | null> {
+  try {
+    const files = await sources(track, "hires");
+    const access = (q: Quality) => {
+      const tier = files.filter((f) => f.level === q);
+      return tier.some((f) => f.url) ? "ok" : tier.length ? "vip" : "none";
+    };
+    return { standard: access("standard"), higher: "none", exhigh: access("exhigh"), lossless: access("lossless"), hires: access("hires") };
+  } catch {
+    return null;
+  }
+}
+
+// The official membership page maps HugeVip to 超级会员. These dates are always China time.
+export async function vip(): Promise<Vip | null> {
+  const { identity, svip } = await qqapi("VipLogin.VipLoginInter", "vip_login_base");
+  const kinds = [
+    { active: identity?.HugeVip === 1, name: "超级会员", end: identity?.HugeVipEnd },
+    { active: identity?.vip === 1, name: svip === 1 ? "豪华绿钻" : "绿钻", end: identity?.overdate },
+  ];
+  for (const { active, name, end } of kinds) {
+    if (!active || typeof end !== "string" || !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(end)) continue;
+    const expireMs = Date.parse(`${end.replace(" ", "T")}+08:00`);
+    if (expireMs > Date.now()) return { name, expireMs };
+  }
+  return null;
 }
 
 const decode = (b64?: string) => (b64 ? new TextDecoder().decode(Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))) : "");
@@ -223,6 +282,26 @@ export async function search(keyword: string): Promise<Track[]> {
     "web",
   );
   return (res.body?.song?.list ?? []).map(toTrack);
+}
+
+// Both native smartbox methods use search_id, unlike the full search's searchid.
+export async function suggest(keyword: string): Promise<SuggestionGroup[]> {
+  const param = { query: keyword, search_id: String(Date.now()), num_per_page: 4 };
+  const [words, hits] = await Promise.all([
+    qqapi("music.smartboxCgi.SmartBoxCgi", "GetSmartBoxResult", param),
+    qqapi("music.smartboxCgi.SmartBoxCgi", "GetSmartBoxResultForPc", param),
+  ]);
+  if (hits.code !== 0 || hits.subcode !== 0) throw new Error("暂时无法获取搜索建议");
+  const hints = new Set<string>((words.items ?? []).filter((s: any) => s.res_type === "search" && s.hint)
+    .map((s: any) => s.hint));
+  const groups: SuggestionGroup[] = [
+    { value: "搜索建议", items: [...hints].slice(0, 6).map((keyword) => ({ kind: "keyword", keyword })) },
+    { value: "歌手", items: (hits.data?.singer?.singer_list ?? []).slice(0, 2)
+      .map((s: any) => ({ kind: "artist", id: s.mid, name: s.name, avatar: https(s.pic) })) },
+    { value: "专辑", items: (hits.data?.album?.album_list ?? []).slice(0, 3)
+      .map((a: any) => ({ kind: "album", id: a.mid, name: a.name, artist: a.singer ?? "" })) },
+  ];
+  return groups.filter((g) => g.items.length);
 }
 
 // The artist and album pages are the web player's, which answers to the web identity.

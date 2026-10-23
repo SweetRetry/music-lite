@@ -8,7 +8,7 @@ const require = createRequire(new URL("../apps/desktop/package.json", import.met
 const { createServer } = await import(pathToFileURL(require.resolve("vite")));
 const server = await createServer({
   root: new URL("../apps/desktop", import.meta.url).pathname,
-  server: { middlewareMode: true },
+  server: { middlewareMode: true, hmr: false },
   appType: "custom",
 });
 const qq = await server.ssrLoadModule("/src/api/qq.ts");

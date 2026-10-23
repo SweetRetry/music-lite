@@ -14,34 +14,36 @@ import {
 import { LockSimpleIcon } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import type { Privilege } from "../../api/privilege";
-import { isQuality, QUALITIES, qualityLabel, rank, RATE, VIP_LEVELS } from "../../api/quality";
+import { isQuality, qualityFor, qualityLabel, rank, RATE, VIP_LEVELS } from "../../api/quality";
 import { player, usePlayer } from "../../player";
-import { providerOf } from "../../providers";
+import { providerOf, useProvider } from "../../providers";
+import type { Track } from "../../api";
 
 // Per song, fetched on first open (not on every track change, most songs never get their menu opened).
 function useSongPrivilege(open: boolean) {
   const track = usePlayer((s) => s.queue[s.index]);
-  const id = track?.id;
-  const [got, setGot] = useState<{ id: number; p: Privilege | null }>();
+  const [got, setGot] = useState<{ track: Track; p: Privilege | null }>();
   useEffect(() => {
     if (!open || !track) return;
     let stale = false;
-    providerOf(track).privilege?.(track).then((p) => !stale && setGot({ id: track.id, p }));
+    providerOf(track).privilege?.(track).catch(() => null).then((p) => !stale && setGot({ track, p }));
     return () => {
       stale = true;
     };
   }, [open, track]);
-  // With an empty queue id is undefined, and got?.id === id would hold before anything loads.
-  return got && got.id === id ? got.p : null;
+  return got?.track === track ? got?.p ?? null : null;
 }
 
 export function QualityMenu() {
   const [open, setOpen] = useState(false);
   const song = useSongPrivilege(open);
-  const quality = usePlayer((s) => s.quality);
+  const { qualities } = useProvider();
+  const preferred = usePlayer((s) => s.quality);
+  const quality = qualityFor(preferred, qualities);
   const source = usePlayer((s) => s.source);
   const lowered = !!source && rank(source.level) >= 0 && rank(source.level) < rank(quality);
-  const shown = lowered ? source.level : quality;
+  const shown = source?.level ?? quality;
+  const label = (level: string) => qualities.find((q) => q.level === level)?.label ?? qualityLabel(level);
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger
@@ -50,17 +52,17 @@ export function QualityMenu() {
             variant="ghost"
             size="xs"
             className="min-w-12 px-1.5 text-muted-foreground"
-            aria-label={`音质：${qualityLabel(shown)}`}
+            aria-label={`音质：${label(shown)}`}
           />
         }
       >
-        {qualityLabel(shown)}
+        {label(shown)}
       </DropdownMenuTrigger>
       <DropdownMenuContent side="top" align="end" sideOffset={12} className="w-56">
         <DropdownMenuGroup>
           <DropdownMenuLabel>音质</DropdownMenuLabel>
           <DropdownMenuRadioGroup value={quality} onValueChange={(v) => isQuality(v) && player.setQuality(v)}>
-            {QUALITIES.map((q) => {
+            {qualities.map((q) => {
               // Without song data fall back to what is true for any song.
               const access = song?.[q.level] ?? "ok";
               const vip = access === "vip" || (!song && VIP_LEVELS.has(q.level));
@@ -68,6 +70,7 @@ export function QualityMenu() {
                 <DropdownMenuRadioItem
                   key={q.level}
                   value={q.level}
+                  disabled={access === "none"}
                   className={access !== "ok" ? "opacity-60" : undefined}
                   title={access === "none" ? "这首歌没有此音质" : undefined}
                 >
@@ -89,7 +92,7 @@ export function QualityMenu() {
             <>
               <DropdownMenuSeparator />
               <div className="px-1.5 py-1 text-xs whitespace-nowrap text-muted-foreground tabular-nums">
-                {lowered ? "已降级为" : "正在播放"} {qualityLabel(source.level)}
+                {lowered ? "已降级为" : "正在播放"} {label(source.level)}
                 {source.br > 0 && ` · ${Math.round(source.br / 1000)} kbps`}
               </div>
             </>

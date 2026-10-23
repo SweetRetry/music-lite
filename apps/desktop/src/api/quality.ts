@@ -8,6 +8,7 @@ export const QUALITIES = [
 ] as const;
 
 export type Quality = (typeof QUALITIES)[number]["level"];
+export type QualityOption = { level: Quality; label: string };
 
 export const DEFAULT_QUALITY: Quality = "exhigh";
 
@@ -15,6 +16,10 @@ export const isQuality = (v: unknown): v is Quality => QUALITIES.some((q) => q.l
 
 // Position in QUALITIES, or -1 for levels the menu does not offer (jymaster, sky, ...).
 export const rank = (level: string) => QUALITIES.findIndex((q) => q.level === level);
+
+// A shared preference can name a tier the other service does not offer.
+export const qualityFor = (quality: Quality, options: readonly QualityOption[]): Quality =>
+  options.findLast((q) => rank(q.level) <= rank(quality))?.level ?? "standard";
 
 export const qualityLabel = (level: string) => QUALITIES.find((q) => q.level === level)?.label ?? level;
 

@@ -5,8 +5,8 @@ import { eapi } from "../eapi";
 
 export type Suggestion =
   | { kind: "keyword"; keyword: string }
-  | { kind: "artist"; id: number; name: string; avatar: string }
-  | { kind: "album"; id: number; name: string; artist: string };
+  | { kind: "artist"; id: number | string; name: string; avatar: string }
+  | { kind: "album"; id: number | string; name: string; artist: string };
 
 export type SuggestionGroup = { value: string; items: Suggestion[] };
 
