@@ -1,5 +1,5 @@
 // Every page is a route. Hash history, because the packaged app loads from a file-like origin.
-import { createHashHistory, createRootRoute, createRoute, createRouter, Navigate } from "@tanstack/react-router";
+import { createHashHistory, createRootRoute, createRoute, createRouter } from "@tanstack/react-router";
 import { Shell } from "./App";
 import { AlbumView } from "./views/Album";
 import { ArtistView } from "./views/Artist";
@@ -7,7 +7,6 @@ import { DailyView } from "./views/Daily";
 import { LikedView, PlaylistView } from "./views/Playlist";
 import { SearchView } from "./views/Search";
 import { useMode } from "./mode";
-import { useProvider } from "./providers";
 import { useUi } from "./ui";
 
 const id = {
@@ -17,13 +16,8 @@ const id = {
 
 const root = createRootRoute({ component: Shell });
 
-// Services without daily recommendations open on the library.
-function Home() {
-  return useProvider().can.daily ? <DailyView /> : <Navigate to="/liked" replace />;
-}
-
 const routes = [
-  createRoute({ getParentRoute: () => root, path: "/", component: Home }),
+  createRoute({ getParentRoute: () => root, path: "/", component: DailyView }),
   createRoute({ getParentRoute: () => root, path: "/liked", component: LikedView }),
   createRoute({
     getParentRoute: () => root,

@@ -8,7 +8,6 @@ import { type PlaylistSummary, type Track, pageId } from "../api";
 import { cover, duration } from "../format";
 import { library, useLibrary } from "../library";
 import { player, playlistOrigin, usePlayer } from "../player";
-import { useProvider } from "../providers";
 import { Artists } from "./Artists";
 import { LikeHeart } from "./LikeHeart";
 import { TrackContextMenu, TrackMoreMenu } from "./TrackMenu";
@@ -28,7 +27,6 @@ export function TrackTable({
   const current = usePlayer((s) => s.queue[s.index]?.id);
   const playing = usePlayer((s) => s.playing);
   const liked = useLibrary((s) => s.liked);
-  const browse = useProvider().can.browse;
   const hasCurrent = tracks.some((t) => t.id === current);
   const locate = () =>
     document.querySelector("tr[aria-current=true]")?.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -134,7 +132,7 @@ export function TrackTable({
                   </div>
                 </TableCell>
                 <TableCell className="truncate text-sm text-muted-foreground">
-                  {t.album.id && browse ? (
+                  {t.album.id ? (
                     <Link className="link" to="/album/$id" params={{ id: pageId(t.album) }}>
                       {t.album.name}
                     </Link>

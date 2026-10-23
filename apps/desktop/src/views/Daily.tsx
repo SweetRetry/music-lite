@@ -12,8 +12,8 @@ export function DailyView() {
   const service = useProvider();
   const uid = useLibrary((s) => s.me?.uid);
   const [openedAt] = useState(Date.now);
-  // Only NetEase's 06:00 refresh is known. QQ uses today's date without promising a refresh hour.
-  const day = new Date(openedAt - (service.id === "ncm" ? 6 * 3600_000 : 0));
+  // A service that names no refresh hour is taken to change at midnight, without promising it.
+  const day = new Date(openedAt - (service.dailyHour ?? 0) * 3600_000);
   const date = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
   const key = scoped(`daily:${uid ?? 0}:${date}`, service.id);
   const { data, error } = useCached(key, service.daily);
@@ -30,7 +30,7 @@ export function DailyView() {
           </div>
         }
         title="每日推荐"
-        meta={`${service.id === "ncm" ? "根据你的口味生成，每天 6:00 更新" : "根据你的口味推荐"} · ${data.length} 首`}
+        meta={`${service.dailyHour === undefined ? "根据你的口味推荐" : `根据你的口味生成，每天 ${service.dailyHour}:00 更新`} · ${data.length} 首`}
         tracks={data}
         origin={origin}
       />

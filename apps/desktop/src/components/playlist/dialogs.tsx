@@ -85,7 +85,7 @@ function NameDialog({ request }: { request: Request | null }) {
 function NameForm({ request }: { request: Request }) {
   const renaming = request.kind === "rename" ? request.playlist : null;
   const navigate = useNavigate();
-  const canPrivate = useProvider().can.private;
+  const canPrivate = useProvider().privatePlaylists;
   const [name, setName] = useState(renaming?.name ?? "");
   const [isPrivate, setPrivate] = useState(false);
   const [busy, setBusy] = useState(false);

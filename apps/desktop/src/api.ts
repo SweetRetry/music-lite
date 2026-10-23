@@ -29,6 +29,9 @@ export type Track = {
   mid?: string;
 };
 
+// Which service a song comes from.
+export const srcOf = (t: Track): ProviderId => t.src ?? "ncm";
+
 export type LyricWord = { ms: number; durationMs: number; text: string };
 // words is present when NetEase has word-level timing (yrc) for the song.
 export type LyricLine = { ms: number; text: string; trans?: string; words?: LyricWord[] };

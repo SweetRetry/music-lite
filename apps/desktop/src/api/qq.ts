@@ -27,6 +27,8 @@ export const toTrack = (s: any): Track => ({
 // A signed-out client and an unreadable one both mean there is no login to use. The login screen says which.
 const uin = () => invoke<string | null>("qq_login").catch(() => null);
 
+export const signedIn = async () => !!(await uin());
+
 type Folder = { dirId: number; tid: number; dirName: string; songNum: number; picUrl: string; invalid?: boolean };
 
 const folders = async (uin: string): Promise<Folder[]> => {

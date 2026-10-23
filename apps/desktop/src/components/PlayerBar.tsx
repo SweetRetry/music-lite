@@ -34,7 +34,7 @@ export function PlayerBar() {
   const disabled = !track;
   // A song playing on from the other service has no heart or sound quality in this library.
   const here = useIsHere(track);
-  const can = useProvider().can;
+  const service = useProvider();
   // Unmuting restores the level from before the mute.
   const lastVolume = useRef(s.volume || 0.8);
   const muted = s.volume === 0;
@@ -138,7 +138,7 @@ export function PlayerBar() {
         </div>
       </div>
       <div className="player__volume">
-        {here && can.quality && <QualityMenu />}
+        {here && service.privilege && <QualityMenu />}
         <QueuePanel />
         <Tip
           label={muted ? "取消静音" : "静音"}

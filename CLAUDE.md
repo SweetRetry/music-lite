@@ -6,6 +6,8 @@ A lightweight NetEase Cloud Music desktop client. Tauri 2 + React 19, pnpm + tur
 
 - `apps/desktop/src-tauri` is the Rust native layer. `eapi(path, body)` signs and sends any NetEase `/api/...` call with the current login (our own QR login, or the official client's). Data features never need Rust changes. Rust also owns the login cookie (`session.rs`, `login.rs`), the tray (`tray.rs`), global shortcuts (`shortcuts.rs`), and hide-on-close. Tray items and global shortcuts reach the player as a `control` event, handled in `src/controls.ts`.
 - `apps/desktop/src/api.ts` normalizes raw NetEase payloads into `Track`, `Playlist`, `Me`. Add feature endpoints in `src/api/<feature>.ts`, reusing `toTrack`, `toSummary`, `songDetails`, `https`.
+- `apps/desktop/src/providers.ts` is the one face of every music service (NetEase in `api.ts` and `src/api/*.ts`, QQ Music in `src/api/qq.ts`). A service leaves out a method it cannot serve, and the UI hides that feature. Views never branch on a provider id.
+- `apps/desktop/src/mcp.ts` holds the MCP tools agents call (search, playlists, likes), acting through `library` so changes show at once. `src-tauri/src/mcp.rs` serves MCP at `http://127.0.0.1:38561/mcp` and forwards `tools/*` to the webview, so a new tool needs no Rust change.
 - `apps/desktop/src/router.tsx` holds every route (TanStack Router, code-based, hash history). Navigate with `<Link to="/artist/$id" params={{ id }}>` or `useNavigate`.
 - State lives in zustand stores: `library.ts` (account, playlists, liked), `player.ts` (queue, audio), `ui.ts` (non-route view state).
 - `packages/ui` holds shadcn (Base UI, base-nova) components and the theme tokens in `src/styles/globals.css`.

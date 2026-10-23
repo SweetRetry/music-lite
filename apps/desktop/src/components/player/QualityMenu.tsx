@@ -13,22 +13,24 @@ import {
 } from "@ncm-lite/ui/components/ui/dropdown-menu";
 import { LockSimpleIcon } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
-import { privilege, type Privilege } from "../../api/privilege";
+import type { Privilege } from "../../api/privilege";
 import { isQuality, QUALITIES, qualityLabel, rank, RATE, VIP_LEVELS } from "../../api/quality";
 import { player, usePlayer } from "../../player";
+import { providerOf } from "../../providers";
 
 // Per song, fetched on first open (not on every track change, most songs never get their menu opened).
 function useSongPrivilege(open: boolean) {
-  const id = usePlayer((s) => s.queue[s.index]?.id);
+  const track = usePlayer((s) => s.queue[s.index]);
+  const id = track?.id;
   const [got, setGot] = useState<{ id: number; p: Privilege | null }>();
   useEffect(() => {
-    if (!open || id === undefined) return;
+    if (!open || !track) return;
     let stale = false;
-    privilege(id).then((p) => !stale && setGot({ id, p }));
+    providerOf(track).privilege?.(track).then((p) => !stale && setGot({ id: track.id, p }));
     return () => {
       stale = true;
     };
-  }, [open, id]);
+  }, [open, track]);
   // With an empty queue id is undefined, and got?.id === id would hold before anything loads.
   return got && got.id === id ? got.p : null;
 }

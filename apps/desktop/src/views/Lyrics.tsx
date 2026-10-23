@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@ncm-lite/ui/components/ui/button";
 import { CaretDownIcon } from "@phosphor-icons/react";
 import { Skeleton } from "@ncm-lite/ui/components/ui/skeleton";
-import type { LyricLine, Track } from "../api";
+import { type LyricLine, type Track, srcOf } from "../api";
 import { peek, put } from "../cache";
 import { scoped } from "../mode";
 import { providerOf } from "../providers";
@@ -13,7 +13,7 @@ import { player, usePlayer } from "../player";
 import { useUi } from "../ui";
 
 // Lyrics never change once published, so a cached copy is final and is never refetched.
-const cacheKey = (t: Track) => scoped(`lyric:${t.id}`, t.src ?? "ncm");
+const cacheKey = (t: Track) => scoped(`lyric:${t.id}`, srcOf(t));
 
 // The view eases to the new line with this time constant, settling in about half a second.
 const FOLLOW_MS = 150;

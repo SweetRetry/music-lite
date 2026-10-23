@@ -1,11 +1,10 @@
 // The signed-in account: profile, playlists and liked songs. Shared by every view.
 import { create } from "zustand";
-import type * as api from "./api";
-import { invoke } from "@tauri-apps/api/core";
+import * as api from "./api";
 import { clear, drop, peek, put } from "./cache";
-import { inMode, type ProviderId, scoped, useMode } from "./mode";
+import { inMode, PROVIDER_IDS, type ProviderId, scoped, useMode } from "./mode";
 import { player, playlistOrigin, usePlayer } from "./player";
-import { isHere, provider } from "./providers";
+import { isHere, provider, providers } from "./providers";
 
 type Library = {
   me: api.Me | null;
@@ -73,7 +72,7 @@ export const useLibrary = create<Library>((set, get) => {
     const mode = useMode.getState().mode;
     clear(inMode(mode));
     const playing = usePlayer.getState().queue[usePlayer.getState().index];
-    if (!playing || (playing.src ?? "ncm") === mode) player.clear();
+    if (!playing || api.srcOf(playing) === mode) player.clear();
     set({ me: null, liked: new Set(), opened: {}, error: "", signedOut: true });
   };
 
@@ -111,9 +110,11 @@ export const useLibrary = create<Library>((set, get) => {
         if (stale(mode)) return;
         if (!me) {
           signOut();
-          // The account on screen is gone, so the other service's takes the screen. With neither, NetEase's
-          // sign-in shows.
-          const next = mode === "qq" ? "ncm" : (await invoke<string | null>("qq_login").catch(() => null)) ? "qq" : null;
+          // The account on screen is gone, so another service takes the screen: one with its own sign-in, or one
+          // whose borrowed login is there. With neither, NetEase's sign-in shows.
+          const other = PROVIDER_IDS.find((id) => id !== mode)!;
+          const login = providers[other].borrowedLogin;
+          const next = !login || (await login.signedIn()) ? other : null;
           if (next && !stale(mode)) await get().enter(next);
           return;
         }
@@ -195,7 +196,9 @@ export const useLibrary = create<Library>((set, get) => {
       drop(scoped(`playlist:${id}`));
     },
     async subscribePlaylist(id, on) {
-      await provider().subscribe(id, on);
+      const subscribe = provider().subscribe;
+      if (!subscribe) throw new Error(`${provider().name}不支持收藏歌单`);
+      await subscribe(id, on);
       await refreshPlaylists();
     },
     // The server decides where new songs go, so an open copy is refetched rather than guessed at.

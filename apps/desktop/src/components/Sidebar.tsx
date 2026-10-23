@@ -17,7 +17,6 @@ import { cover } from "../format";
 import { useLibrary } from "../library";
 import { scoped } from "../mode";
 import { DAILY_ORIGIN, playlistOrigin, usePlayer } from "../player";
-import { useProvider } from "../providers";
 import { Account } from "./Account";
 import { PlaylistContextMenu } from "./playlist/actions";
 import { openPlaylistDialog } from "./playlist/dialogs";
@@ -40,7 +39,6 @@ function Playing({ origin }: { origin: string }) {
 export function Sidebar() {
   const me = useLibrary((s) => s.me);
   const likedId = me?.playlists.find((p) => p.liked)?.id;
-  const daily = useProvider().can.daily;
 
   // "我喜欢的音乐" is the library, a different layer from playlists, so it sits with the daily mix.
   const mine = me?.playlists.filter((p) => p.mine && !p.liked) ?? [];
@@ -51,21 +49,19 @@ export function Sidebar() {
       <SidebarContent className="gap-4 px-1 pt-2 pb-4">
         <SidebarGroup>
           <SidebarMenu className="gap-1">
-            {daily && (
-              <SidebarMenuItem>
-                <SidebarMenuButton className={item} render={<Link to="/" activeOptions={{ exact: true }} />}>
-                  {/* A calendar page with today's date, like the official client. */}
-                  <span className={`relative ${glyph}`}>
-                    <CalendarBlankIcon className="size-6!" />
-                    <span className="absolute inset-x-0 top-3 text-center text-[9px] leading-none font-semibold tabular-nums">
-                      {new Date().getDate()}
-                    </span>
+            <SidebarMenuItem>
+              <SidebarMenuButton className={item} render={<Link to="/" activeOptions={{ exact: true }} />}>
+                {/* A calendar page with today's date, like the official client. */}
+                <span className={`relative ${glyph}`}>
+                  <CalendarBlankIcon className="size-6!" />
+                  <span className="absolute inset-x-0 top-3 text-center text-[9px] leading-none font-semibold tabular-nums">
+                    {new Date().getDate()}
                   </span>
-                  <span>每日推荐</span>
-                  <Playing origin={scoped(DAILY_ORIGIN)} />
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )}
+                </span>
+                <span>每日推荐</span>
+                <Playing origin={scoped(DAILY_ORIGIN)} />
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton className={item} render={<Link to="/liked" />}>
                 <span className={`${glyph} text-primary`}>

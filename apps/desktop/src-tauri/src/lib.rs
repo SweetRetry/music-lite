@@ -2,6 +2,7 @@ mod eapi;
 mod login;
 #[cfg(target_os = "macos")]
 mod macos;
+mod mcp;
 mod qq;
 mod qq_session;
 mod qq_sign;
@@ -31,6 +32,7 @@ pub fn run() {
             }
             tray::create(app.handle())?;
             shortcuts::register(app.handle());
+            mcp::serve(app.handle().clone());
             Ok(())
         })
         // Closing the window hides it and the music keeps playing. Quit from the tray menu or with Cmd+Q.
@@ -48,6 +50,7 @@ pub fn run() {
             login::login_official,
             qq::qq_login,
             qq::qqapi,
+            mcp::mcp_reply,
         ])
         .build(tauri::generate_context!())
         .expect("error while running NCM Lite")

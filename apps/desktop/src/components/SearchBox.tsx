@@ -14,7 +14,7 @@ import { Kbd } from "@ncm-lite/ui/components/ui/kbd";
 import { useNavigate } from "@tanstack/react-router";
 import { MagnifyingGlassIcon, VinylRecordIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
-import { type Suggestion, type SuggestionGroup, suggest, suggestionLabel } from "../api/suggest";
+import { type Suggestion, type SuggestionGroup, suggestionLabel } from "../api/suggest";
 import { useProvider } from "../providers";
 
 // There is one search box, so shortcuts can focus it without threading refs through the tree.
@@ -29,7 +29,7 @@ export function SearchBox() {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [groups, setGroups] = useState<SuggestionGroup[]>([]);
-  const suggestions = useProvider().can.suggest;
+  const suggest = useProvider().suggest;
   const ref = useRef<HTMLInputElement>(null);
   const anchor = useRef<HTMLFormElement>(null);
 
@@ -40,14 +40,14 @@ export function SearchBox() {
 
   useEffect(() => {
     const keyword = q.trim();
-    if (!keyword || !suggestions) return setGroups([]);
+    if (!keyword || !suggest) return setGroups([]);
     let live = true;
     const t = setTimeout(() => suggest(keyword).then((g) => live && setGroups(g), () => {}), 150);
     return () => {
       live = false;
       clearTimeout(t);
     };
-  }, [q, suggestions]);
+  }, [q, suggest]);
 
   const searchFor = (keyword: string) => {
     setOpen(false);

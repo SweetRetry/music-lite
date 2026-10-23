@@ -11,22 +11,21 @@ import {
 } from "@ncm-lite/ui/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ncm-lite/ui/components/ui/tooltip";
 import { useNavigate } from "@tanstack/react-router";
-import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
 import type { Me } from "../api";
-import { vip as fetchVip } from "../api/vip";
+import type { Vip } from "../api/vip";
 import { peek } from "../cache";
 import { cover } from "../format";
 import { library, useLibrary } from "../library";
-import { isProviderId, PROVIDER_IDS, scoped, useMode } from "../mode";
+import { isProviderId, PROVIDER_IDS, type ProviderId, scoped, useMode } from "../mode";
 import { providers, useProvider } from "../providers";
 import { useCached } from "./states";
 import { ThemeToggle } from "./ThemeToggle";
 
 // Keyed by uid at the call site, so an account switch remounts it and reads the (cleared) cache afresh.
 // A failed lookup just means no badge.
-function VipBadge() {
-  const { data: vip } = useCached("vip", fetchVip);
+function VipBadge({ load }: { load: () => Promise<Vip | null> }) {
+  const { data: vip } = useCached("vip", load);
   if (!vip) return null;
   return (
     <Tooltip>
@@ -37,19 +36,17 @@ function VipBadge() {
 }
 
 // The accounts of every service, one row each. The one on screen is checked. A service with no account yet is
-// a way to sign in: NetEase opens its sign-in, and QQ Music, which borrows its client's login, waits for that.
+// a way to sign in: NetEase opens its sign-in, and a service that borrows its client's login waits for that.
 function Accounts() {
   const mode = useMode((s) => s.mode);
   const me = useLibrary((s) => s.me);
   const navigate = useNavigate();
-  // Whether QQ Music's client is signed in, looked up each time the menu opens.
-  const [qqSignedIn, setQqSignedIn] = useState<boolean | undefined>();
-  // The menu mounts when it opens, so this looks again each time.
+  // Services whose client is signed out, so there is no login to borrow. The menu mounts when it opens, so
+  // this looks again each time.
+  const [away, setAway] = useState<ProviderId[]>([]);
   useEffect(() => {
-    invoke<string | null>("qq_login").then(
-      (uin) => setQqSignedIn(!!uin),
-      () => setQqSignedIn(false),
-    );
+    for (const id of PROVIDER_IDS)
+      providers[id].borrowedLogin?.signedIn().then((ok) => !ok && setAway((a) => [...a, id]));
   }, []);
   const accountOf = (id: (typeof PROVIDER_IDS)[number]) => (id === mode ? me : peek<Me>(scoped("me", id)));
   return (
@@ -65,13 +62,13 @@ function Accounts() {
       >
         {PROVIDER_IDS.map((id) => {
           const account = accountOf(id);
-          const unavailable = id === "qq" && qqSignedIn === false;
+          const unavailable = away.includes(id);
           return (
             <DropdownMenuRadioItem key={id} value={id} disabled={unavailable}>
               <span className="flex min-w-0 flex-col">
                 <span className="truncate">{account?.nickname ?? providers[id].short}</span>
                 <span className="text-xs text-muted-foreground">
-                  {unavailable ? "请先登录 QQ 音乐客户端" : account ? providers[id].short : "未登录"}
+                  {unavailable ? providers[id].borrowedLogin?.hint : account ? providers[id].short : "未登录"}
                 </span>
               </span>
             </DropdownMenuRadioItem>
@@ -84,7 +81,7 @@ function Accounts() {
 
 export function Account() {
   const me = useLibrary((s) => s.me);
-  const can = useProvider().can;
+  const { vip } = useProvider();
   if (!me) return null;
   const avatar = (
     <Avatar className="size-9">
@@ -106,7 +103,7 @@ export function Account() {
       {/* The membership sits under the name, so a long nickname keeps the whole row. */}
       <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
         <span className="w-full truncate text-sm font-medium text-foreground">{me.nickname}</span>
-        {can.vip && <VipBadge key={me.uid} />}
+        {vip && <VipBadge key={me.uid} load={vip} />}
       </div>
       <ThemeToggle />
     </div>

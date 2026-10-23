@@ -30,6 +30,7 @@ import { Fragment } from "react";
 import { toast } from "sonner";
 import type { PlaylistSummary } from "../../api";
 import { editable, library, takenDown, useLibrary } from "../../library";
+import { useProvider } from "../../providers";
 import { failed, openPlaylistDialog } from "./dialogs";
 
 // hint is a quiet count at the row's end. A destructive action sits apart from the rest.
@@ -38,6 +39,7 @@ type Action = { label: string; icon: Icon; run: () => void; destructive?: boolea
 function usePlaylistActions(playlist: PlaylistSummary): Action[] {
   const me = useLibrary((s) => s.me);
   const opened = useLibrary((s) => s.opened[playlist.id]);
+  const collects = !!useProvider().subscribe;
   if (!me) return [];
   if (editable(me, playlist.id)) {
     // Only a playlist that has been opened has its songs to look through.
@@ -51,7 +53,7 @@ function usePlaylistActions(playlist: PlaylistSummary): Action[] {
     ];
   }
   const own = me.playlists.find((p) => p.id === playlist.id)?.mine ?? false;
-  if (own) return [];
+  if (own || !collects) return [];
   const collected = me.playlists.some((p) => p.id === playlist.id);
   const toggle = (on: boolean) =>
     library.subscribePlaylist(playlist.id, on).then(

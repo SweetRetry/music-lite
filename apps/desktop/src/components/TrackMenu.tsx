@@ -37,7 +37,6 @@ import { type PlaylistSummary, type Track, pageId } from "../api";
 import { toast } from "sonner";
 import { editable, library, useLibrary } from "../library";
 import { player } from "../player";
-import { useProvider } from "../providers";
 import { failed, openPlaylistDialog } from "./playlist/dialogs";
 
 export type TrackAction =
@@ -58,7 +57,6 @@ export function useTrackActions({ tracks, index, playlist, origin }: TrackContex
   const liked = useLibrary((s) => s.liked.has(track.id));
   const me = useLibrary((s) => s.me);
   const navigate = useNavigate();
-  const browse = useProvider().can.browse;
   // The liked playlist is left to 喜欢, and the playlist on screen already has the song.
   const targets = me?.playlists.filter((p) => p.mine && !p.liked && p.id !== playlist?.id) ?? [];
   const addTo = (pid: number, name: string) =>
@@ -73,7 +71,6 @@ export function useTrackActions({ tracks, index, playlist, origin }: TrackContex
   });
   // One artist is one row. Several fold into a submenu, so a long credit list does not make a long menu.
   const artistActions = (): TrackAction[] => {
-    if (!browse) return [];
     const artists = track.artists.filter((a) => a.id);
     if (artists.length < 2) return artists.map((a) => ({ ...toArtist(a), label: `歌手：${a.name}`, icon: UserIcon }));
     return [{ kind: "sub", label: "歌手", icon: UserIcon, items: artists.map(toArtist) }];
@@ -117,9 +114,9 @@ export function useTrackActions({ tracks, index, playlist, origin }: TrackContex
           } satisfies TrackAction,
         ]
       : []),
-    ...(browse ? [{ kind: "separator" } satisfies TrackAction] : []),
+    { kind: "separator" } satisfies TrackAction,
     ...artistActions(),
-    ...(track.album.id && browse
+    ...(track.album.id
       ? [
           {
             kind: "item",
