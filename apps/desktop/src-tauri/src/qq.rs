@@ -74,11 +74,20 @@ pub async fn call(module: &str, method: &str, param: Value, comm: Comm) -> Resul
         .send()
         .await
         .and_then(|r| r.error_for_status())
-        .map_err(|e| format!("{name} failed: {e}"))?;
-    let raw = res.bytes().await.map_err(|e| format!("{name} failed: {e}"))?;
+        .map_err(|e| {
+            eprintln!("{name} failed: {e}");
+            "暂时无法连接 QQ 音乐。".to_string()
+        })?;
+    let raw = res.bytes().await.map_err(|e| {
+        eprintln!("{name} failed: {e}");
+        "暂时无法连接 QQ 音乐。".to_string()
+    })?;
     // A few responses carry bytes that are not UTF-8 after unsealing. The code and data are ASCII-framed, so lossy is safe.
     let text = String::from_utf8_lossy(&qq_sign::ag1_open_response(&raw)).into_owned();
-    let json: Value = serde_json::from_str(&text).map_err(|e| format!("{name} returned invalid JSON: {e}"))?;
+    let json: Value = serde_json::from_str(&text).map_err(|e| {
+        eprintln!("{name} returned invalid JSON: {e}");
+        "QQ 音乐暂时无法返回数据。".to_string()
+    })?;
 
     if json["code"].as_i64().unwrap_or(-1) != 0 {
         return Err(format!("{name} returned {}", json["code"]));

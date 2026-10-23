@@ -4,6 +4,7 @@ mod login;
 mod macos;
 mod mcp;
 mod qq;
+mod qq_access;
 mod qq_session;
 mod qq_sign;
 mod session;
@@ -26,6 +27,7 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
             session::init(app.path().app_data_dir()?);
+            qq_access::init(app.path().app_data_dir()?);
             #[cfg(target_os = "macos")]
             if let Some(window) = app.get_webview_window("main") {
                 macos::unified_toolbar(&window)?;
@@ -50,10 +52,11 @@ pub fn run() {
             login::login_official,
             qq::qq_login,
             qq::qqapi,
+            qq_access::qq_request_access,
             mcp::mcp_reply,
         ])
         .build(tauri::generate_context!())
-        .expect("error while running NCM Lite")
+        .expect("error while running Music Lite")
         .run(|app, event| {
             // Clicking the Dock icon brings a hidden window back.
             #[cfg(target_os = "macos")]

@@ -1,4 +1,4 @@
-// QQ Music has no login of its own in NCM Lite. It borrows the one the official macOS client keeps: an
+// QQ Music has no login of its own in Music Lite. It borrows the one the official macOS client keeps: an
 // NSKeyedArchiver archive of a UserInfo under AutoLoginUserInfo in the client's preferences. Read on every
 // request, so signing in again there takes effect without a restart.
 // The ticket stays in this process and only ever travels to qq.com.
@@ -42,24 +42,25 @@ fn parse_login(archive: &[u8]) -> Option<Session> {
 }
 
 // Ok(None) is the client being signed out, or never run. Err is a login that exists but cannot be read.
-pub fn read() -> Result<Option<Session>, String> {
+pub fn path() -> Result<String, String> {
     let home = std::env::var("HOME").map_err(|_| "HOME is not set")?;
-    let path = format!("{home}/{PREFS}");
-    let prefs = match Value::from_file(&path) {
-        Ok(v) => v,
-        Err(e) => {
-            return match std::fs::metadata(&path) {
-                Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
-                Err(err) if err.kind() == std::io::ErrorKind::PermissionDenied => Err(DENIED.into()),
-                _ => Err(format!("Cannot read {path}: {e}")),
-            };
-        }
+    Ok(format!("{home}/{PREFS}"))
+}
+
+pub fn read() -> Result<Option<Session>, String> {
+    let path = path()?;
+    let bytes = match crate::qq_access::read(&path) {
+        Ok(bytes) => bytes,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => return Err(DENIED.into()),
+        Err(e) => return Err(format!("Cannot read {path}: {e}")),
     };
+    let prefs = Value::from_reader(Cursor::new(bytes)).map_err(|e| format!("Cannot parse {path}: {e}"))?;
     let archive = prefs.as_dictionary().and_then(|d| d.get("AutoLoginUserInfo")).and_then(Value::as_data);
     Ok(archive.and_then(parse_login))
 }
 
-const DENIED: &str = "没有权限读取 QQ 音乐的登录。在系统设置的隐私与安全性里，给 NCM Lite 开启完全磁盘访问权限";
+const DENIED: &str = "QQ_PERMISSION_DENIED";
 
 #[cfg(test)]
 mod tests {

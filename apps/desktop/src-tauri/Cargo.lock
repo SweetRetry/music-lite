@@ -2275,6 +2275,7 @@ dependencies = [
  "md-5",
  "objc2",
  "objc2-app-kit",
+ "objc2-foundation",
  "plist",
  "rand",
  "reqwest",

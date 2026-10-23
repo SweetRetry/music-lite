@@ -1,7 +1,7 @@
 [package]
 name = "ncm-lite"
 version = "0.1.0"
-description = "A lightweight NetEase Cloud Music client"
+description = "A lightweight NetEase Cloud Music and QQ Music client"
 authors = ["SweetRetry"]
 license = ""
 repository = ""
@@ -38,4 +38,5 @@ tiny_http = "0.12.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6.5"
-objc2-app-kit = { version = "0.3.2", default-features = false, features = ["std", "NSResponder", "NSToolbar", "NSWindow"] }
+objc2-app-kit = { version = "0.3.2", default-features = false, features = ["std", "NSResponder", "NSToolbar", "NSWindow", "NSPanel", "NSSavePanel", "NSOpenPanel", "NSApplication"] }
+objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSArray", "NSData", "NSError", "NSString", "NSURL"] }
