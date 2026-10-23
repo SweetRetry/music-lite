@@ -1,30 +1,40 @@
 # Music Lite
 
-网易云音乐与 QQ 音乐的轻量客户端。保留听歌、音质切换、歌词、每日推荐、歌单和搜索，使用各自官方接口。侧栏显示会员类型与到期日期。
+网易云音乐与 QQ 音乐的轻量桌面客户端。Tauri 2 + React 19，一套界面，两个服务各走自己的官方接口。歌曲、歌单、专辑和歌手读的是官方数据，播放流也由官方接口签发。
+
+## 能做什么
+
+- 搜索与输入联想、每日推荐、歌单、专辑、歌手页
+- 播放队列、单曲循环、列表循环、随机播放。随机按轮洗牌，同轮不重复，上一首沿播放历史返回
+- 歌词逐行跟随，点一行跳到那里，`⌘⇧L` 展开成整页
+- 音质切换，显示会员类型与到期日期，并标出每首歌当前账号能播的音质
+- 喜欢、新建歌单、改名、删除、加歌、移歌
+- 网易云可扫码登录，也可复用官方 macOS 客户端的登录；QQ 音乐复用官方 macOS 客户端的登录
+- 托盘与全局快捷键、系统媒体键，关窗后继续播放
+- 本地缓存，回退到旧页面时先出内容
+
+服务做不到的功能不出现。QQ 音乐不支持收藏别人的歌单，界面上就没有这个入口，视图不判断是哪个服务。
+
+登录票据只在原生进程里使用，不会进入网页层。首次读取 QQ 音乐登录时，权限不足会弹出系统文件授权窗口，取消后可从账号菜单重新授权。
+
+## 跑起来
 
 ```bash
 pnpm install
-pnpm dev     # 开发，打开 Tauri 窗口
-pnpm build   # 打包到 apps/desktop/src-tauri/target/release/bundle
+pnpm dev       # 开发，打开 Tauri 窗口
+pnpm build     # 打包到 apps/desktop/src-tauri/target/release/bundle
+pnpm typecheck
 ```
 
-需要 Node、pnpm 和 Rust 工具链。
-
-网易云支持扫码登录，也可复用官方 macOS 客户端登录。QQ 音乐复用官方 macOS 客户端登录。登录票据只在原生进程里使用，不会进入网页层。
-
-首次读取 QQ 音乐登录时，权限不足会弹出系统文件授权窗口。取消后可从账号菜单重新授权。
-
-播放栏支持单曲循环、列表循环和随机播放，两种服务共用本地播放队列并记住所选方式。随机播放按轮洗牌，同轮不重复，上一首沿播放历史返回。
-
-## 怎么来的
-
-官方客户端 3.1.13 是 CEF 外壳。界面是 `Contents/Resources/resources.pack`，一个前面带 100 字节头的 zip，`unzip` 可以直接解开。
-前端只调用 `fetch("/api/...")`，由原生层改写成加密的 `/eapi/` 请求。`apps/desktop/src-tauri/src/eapi.rs` 补的就是这层。
+需要 Node、pnpm 和 Rust 工具链。开发和打包都只在 macOS 上验证过。
 
 ## 结构
 
 - `apps/desktop` 是 Tauri 应用。`src` 是 React 界面，`src-tauri` 是 Rust 原生层，负责两个服务的通信、登录与系统集成。
+- `apps/desktop/src/providers.ts` 是每个音乐服务的唯一入口。服务在某处留空，界面就隐藏那处功能。
+- `apps/desktop/src/mcp.ts` 与 `src-tauri/src/mcp.rs` 让 agent 通过 MCP 整理歌单，端口 `127.0.0.1:38561`。工具在网页层实现，加一个工具不用改 Rust。
 - `packages/ui` 是 shadcn 组件和主题 token。加组件在这个目录跑 `pnpm dlx shadcn@latest add <name>`。
+- `docs/research` 是对官方客户端的逆向记录，接口形状来自那里。
 
 ## 快捷键
 
@@ -63,3 +73,8 @@ pnpm build   # 打包到 apps/desktop/src-tauri/target/release/bundle
 - `?` 快捷键清单
 
 系统媒体键也可用。
+
+## 怎么来的
+
+官方客户端 3.1.13 是 CEF 外壳。界面是 `Contents/Resources/resources.pack`，一个前面带 100 字节头的 zip，`unzip` 可以直接解开。
+前端只调用 `fetch("/api/...")`，由原生层改写成加密的 `/eapi/` 请求。`apps/desktop/src-tauri/src/eapi.rs` 补的就是这层。QQ 音乐没有这层壳，直接复用官方客户端的本地接口与其签名。
