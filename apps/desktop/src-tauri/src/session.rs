@@ -110,7 +110,3 @@ pub fn current() -> Option<Session> {
         Login::SignedOut => None,
     }
 }
-
-pub fn is_own() -> bool {
-    matches!(stored(), Login::Own { .. })
-}

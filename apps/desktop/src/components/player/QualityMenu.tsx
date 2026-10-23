@@ -8,12 +8,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@ncm-lite/ui/components/ui/dropdown-menu";
 import { LockSimpleIcon } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { privilege, type Privilege } from "../../api/privilege";
-import { isQuality, QUALITIES, qualityLabel, rank, VIP_LEVELS } from "../../api/quality";
+import { isQuality, QUALITIES, qualityLabel, rank, RATE, VIP_LEVELS } from "../../api/quality";
 import { player, usePlayer } from "../../player";
 
 // Per song, fetched on first open (not on every track change, most songs never get their menu opened).
@@ -53,7 +54,7 @@ export function QualityMenu() {
       >
         {qualityLabel(shown)}
       </DropdownMenuTrigger>
-      <DropdownMenuContent side="top" align="end" sideOffset={12} className="w-44">
+      <DropdownMenuContent side="top" align="end" sideOffset={12} className="w-56">
         <DropdownMenuGroup>
           <DropdownMenuLabel>音质</DropdownMenuLabel>
           <DropdownMenuRadioGroup value={quality} onValueChange={(v) => isQuality(v) && player.setQuality(v)}>
@@ -68,22 +69,28 @@ export function QualityMenu() {
                   className={access !== "ok" ? "opacity-60" : undefined}
                   title={access === "none" ? "这首歌没有此音质" : undefined}
                 >
-                  {q.label}
+                  <span className="whitespace-nowrap">{q.label}</span>
                   {vip && (
                     <Badge variant="outline" className="h-4 gap-0.5 px-1 text-[10px] text-primary">
                       {access === "vip" && <LockSimpleIcon weight="bold" />}VIP
                     </Badge>
                   )}
-                  {access === "none" && <span className="text-xs text-muted-foreground">无</span>}
+                  {/* Said as a rate where the server names one, and as "没有" where this song has no such file. */}
+                  <span className="ml-auto text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+                    {access === "none" ? "没有" : RATE[q.level] < 999000 ? `${RATE[q.level] / 1000} kbps` : ""}
+                  </span>
                 </DropdownMenuRadioItem>
               );
             })}
           </DropdownMenuRadioGroup>
           {source && (
-            <DropdownMenuLabel className="border-t border-border pt-2">
-              {lowered ? "这首歌实际播放" : "正在播放"} {qualityLabel(source.level)}
-              {source.br > 0 && ` · ${Math.round(source.br / 1000)}kbps`}
-            </DropdownMenuLabel>
+            <>
+              <DropdownMenuSeparator />
+              <div className="px-1.5 py-1 text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+                {lowered ? "已降级为" : "正在播放"} {qualityLabel(source.level)}
+                {source.br > 0 && ` · ${Math.round(source.br / 1000)} kbps`}
+              </div>
+            </>
           )}
         </DropdownMenuGroup>
       </DropdownMenuContent>

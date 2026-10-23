@@ -1,10 +1,11 @@
-import { search } from "../api";
+import { provider } from "../providers";
+import { scoped } from "../mode";
 import { SearchSkeleton } from "../components/skeletons";
 import { Notice, useCached } from "../components/states";
 import { TrackTable } from "../components/TrackTable";
 
 export function SearchView({ q }: { q: string }) {
-  const { data, error } = useCached(`search:${q}`, () => search(q));
+  const { data, error } = useCached(scoped(`search:${q}`), () => provider().search(q));
   if (error) return <Notice message={`搜索失败。${error}`} />;
   if (!data) return <SearchSkeleton />;
   return (

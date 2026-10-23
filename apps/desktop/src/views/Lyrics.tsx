@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@ncm-lite/ui/components/ui/button";
 import { CaretDownIcon } from "@phosphor-icons/react";
 import { Skeleton } from "@ncm-lite/ui/components/ui/skeleton";
-import { lyric, type LyricLine } from "../api";
+import type { LyricLine, Track } from "../api";
 import { peek, put } from "../cache";
+import { scoped } from "../mode";
+import { providerOf } from "../providers";
 import { Notice } from "../components/states";
 import { artistNames, cover } from "../format";
 import { Tip } from "../components/ShortcutKeys";
@@ -11,7 +13,7 @@ import { player, usePlayer } from "../player";
 import { useUi } from "../ui";
 
 // Lyrics never change once published, so a cached copy is final and is never refetched.
-const cacheKey = (id: number) => `lyric:${id}`;
+const cacheKey = (t: Track) => scoped(`lyric:${t.id}`, t.src ?? "ncm");
 
 // The view eases to the new line with this time constant, settling in about half a second.
 const FOLLOW_MS = 150;
@@ -43,7 +45,7 @@ function Backdrop({ src }: { src: string }) {
 export function LyricsView({ closing }: { closing: boolean }) {
   const { queue, index } = usePlayer();
   const track = queue[index];
-  const [lines, setLines] = useState<LyricLine[] | null>(() => (track && peek<LyricLine[]>(cacheKey(track.id))) || null);
+  const [lines, setLines] = useState<LyricLine[] | null>(() => (track && peek<LyricLine[]>(cacheKey(track))) || null);
   const [active, setActive] = useState(-1);
   const [error, setError] = useState("");
   const viewRef = useRef<HTMLDivElement>(null);
@@ -55,13 +57,13 @@ export function LyricsView({ closing }: { closing: boolean }) {
   useEffect(() => {
     if (!track) return;
     setError("");
-    const cached = peek<LyricLine[]>(cacheKey(track.id));
+    const cached = peek<LyricLine[]>(cacheKey(track));
     if (cached) return setLines(cached);
     setLines(null);
     let live = true;
-    lyric(track.id).then(
+    providerOf(track).lyric(track).then(
       (l) => {
-        if (l.length) put(cacheKey(track.id), l);
+        if (l.length) put(cacheKey(track), l);
         if (live) setLines(l);
       },
       (e) => live && setError(e.message),
@@ -69,7 +71,7 @@ export function LyricsView({ closing }: { closing: boolean }) {
     return () => {
       live = false;
     };
-  }, [track?.id]);
+  }, [track?.id, track?.src]);
 
   // Each frame: find the current line, fill word-timed lines by their own clock, and glide the view.
   // Word progress is written to CSS directly so React re-renders only when the line changes.

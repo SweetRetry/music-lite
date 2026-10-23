@@ -67,6 +67,8 @@ img {
   --gutter: 8px;
   /* The content's side padding. The player bar lines up with the list above it. */
   --inset: 48px;
+  /* The lyrics page's side padding. The player bar over it keeps to the same lines. */
+  --stage-pad: 80px;
   position: relative;
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr;
@@ -162,9 +164,10 @@ img {
 
 /* Over the lyrics page: the whole width, no surface of its own, above the page. */
 .player[data-immersive] {
-  padding: 0 32px;
-  left: var(--gutter);
-  right: var(--gutter);
+  /* Less the border: the cover lines up with the lyrics page's cover, the volume with its lyrics column. */
+  padding: 0 calc(var(--stage-pad) - 1px);
+  left: 0;
+  right: 0;
   background: transparent;
   -webkit-backdrop-filter: blur(0);
   backdrop-filter: blur(0);
@@ -420,7 +423,7 @@ button:disabled {
   /* One row as tall as the view. The lyrics column clips instead of scrolling, so an auto row would grow to every line. */
   grid-template-rows: minmax(0, 1fr);
   gap: 96px;
-  padding: var(--titlebar) 80px 88px;
+  padding: var(--titlebar) var(--stage-pad) 88px;
   background: var(--background);
   overflow: hidden;
   /* Fades in over the page, and out faster: the system answers, the user is already done. */

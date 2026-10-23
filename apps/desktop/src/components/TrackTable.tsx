@@ -4,10 +4,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ncm-lite/ui/components/ui/tooltip";
 import { Link } from "@tanstack/react-router";
 import { CrosshairIcon, DotsThreeIcon, PlayIcon } from "@phosphor-icons/react";
-import type { PlaylistSummary, Track } from "../api";
+import { type PlaylistSummary, type Track, pageId } from "../api";
 import { cover, duration } from "../format";
 import { library, useLibrary } from "../library";
 import { player, playlistOrigin, usePlayer } from "../player";
+import { useProvider } from "../providers";
 import { Artists } from "./Artists";
 import { LikeHeart } from "./LikeHeart";
 import { TrackContextMenu, TrackMoreMenu } from "./TrackMenu";
@@ -27,6 +28,7 @@ export function TrackTable({
   const current = usePlayer((s) => s.queue[s.index]?.id);
   const playing = usePlayer((s) => s.playing);
   const liked = useLibrary((s) => s.liked);
+  const browse = useProvider().can.browse;
   const hasCurrent = tracks.some((t) => t.id === current);
   const locate = () =>
     document.querySelector("tr[aria-current=true]")?.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -94,7 +96,7 @@ export function TrackTable({
                         )}
                       </div>
                       <div className="truncate text-sm text-muted-foreground">
-                        <Artists artists={t.artists} />
+                        <Artists artists={t.artists} src={t.src} />
                         {t.reason && ` · ${t.reason}`}
                       </div>
                     </div>
@@ -110,7 +112,7 @@ export function TrackTable({
                       className={
                         isLiked ? "text-primary hover:text-primary" : `text-muted-foreground ${reveal}`
                       }
-                      onClick={() => library.toggleLike(t.id)}
+                      onClick={() => library.toggleLike(t)}
                     >
                       <LikeHeart liked={isLiked} />
                     </Button>
@@ -132,8 +134,8 @@ export function TrackTable({
                   </div>
                 </TableCell>
                 <TableCell className="truncate text-sm text-muted-foreground">
-                  {t.album.id ? (
-                    <Link className="link" to="/album/$id" params={{ id: t.album.id }}>
+                  {t.album.id && browse ? (
+                    <Link className="link" to="/album/$id" params={{ id: pageId(t.album) }}>
                       {t.album.name}
                     </Link>
                   ) : (

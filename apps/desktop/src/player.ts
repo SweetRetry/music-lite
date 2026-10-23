@@ -1,8 +1,9 @@
 // One audio element, one queue. Songs without a playable source are skipped, not fatal.
 import { create } from "zustand";
-import { songUrl, type Track } from "./api";
+import type { Track } from "./api";
 import { DEFAULT_QUALITY, isQuality, type Quality } from "./api/quality";
 import { artistNames, cover } from "./format";
+import { providerOf } from "./providers";
 
 export type PlayerState = {
   queue: Track[];
@@ -104,7 +105,7 @@ async function load(index: number, skipped = 0, keep?: { at: number; play: boole
       ? { loading: true }
       : { index, loading: true, position: 0, duration: track.durationMs / 1000, notice: "", source: null },
   );
-  const src = track.unavailable ? null : await songUrl(track.id, state().quality).catch(() => null);
+  const src = track.unavailable ? null : await providerOf(track).songUrl(track, state().quality).catch(() => null);
   if (token !== loadToken) return;
   if (!src) {
     if (keep && !empty()) return set({ loading: false, notice: "这个音质暂时无法播放" });

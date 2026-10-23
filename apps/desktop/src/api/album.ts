@@ -3,9 +3,9 @@
 import { type Ref, type Track, https, toTrack } from "../api";
 import { eapi } from "../eapi";
 
-export type AlbumCard = { id: number; name: string; cover: string; year: string };
+export type AlbumCard = { id: string; name: string; cover: string; year: string };
 export type Album = {
-  id: number;
+  id: string;
   name: string;
   cover: string;
   artists: Ref[];
@@ -18,13 +18,13 @@ export type Album = {
 const year = (ms: number) => (ms > 0 ? String(new Date(ms).getFullYear()) : "");
 
 export const toAlbumCard = (a: any): AlbumCard => ({
-  id: a.id,
+  id: String(a.id),
   name: a.name,
   cover: https(a.picUrl),
   year: year(a.publishTime),
 });
 
-export async function album(id: number): Promise<Album> {
+export async function album(id: string): Promise<Album> {
   const res = await eapi(`/api/v1/album/${id}`);
   const info = res.album ?? {};
   const cover = https(info.picUrl);

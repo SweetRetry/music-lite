@@ -60,8 +60,11 @@ export function drop(key: string) {
   write((s) => s.delete(key));
 }
 
-// For an account switch: nothing cached for the last account may show.
-export function clear() {
-  mem.clear();
-  write((s) => s.clear());
+// For an account switch: nothing cached for the last account may show. A match limits it to those keys.
+export function clear(match?: (key: string) => boolean) {
+  if (!match) {
+    mem.clear();
+    return write((s) => s.clear());
+  }
+  for (const key of [...mem.keys()]) if (match(key)) drop(key);
 }

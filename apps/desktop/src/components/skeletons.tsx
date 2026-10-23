@@ -68,42 +68,16 @@ export function HeroSkeleton({ art }: { art: "square" | "round" }) {
   );
 }
 
-const Heading = () => (
-  <div className="mb-3 flex h-6 items-center">
-    <Skeleton className="h-4 w-16" />
-  </div>
-);
+// The tab strip of the artist page.
+const TabStrip = () => <Skeleton className="mb-4 h-8 w-40 rounded-lg" />;
 
-// Same grid as AlbumGrid: square cover, a name line and a year line.
-function AlbumGridSkeleton({ count = 6 }: { count?: number }) {
-  return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(148px,1fr))] gap-4" aria-hidden>
-      {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="flex min-w-0 flex-col gap-2">
-          <Skeleton className="aspect-square w-full rounded-lg" />
-          <div className="flex flex-col gap-1.5 px-0.5">
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-3 w-10" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// albums adds the 热门歌曲 / 专辑 headings and the album grid of the artist page.
-export function PageSkeleton({ art, albums }: { art: "square" | "round"; albums?: boolean }) {
+// tabs adds the tab strip above the track list of the artist page.
+export function PageSkeleton({ art, tabs }: { art: "square" | "round"; tabs?: boolean }) {
   return (
     <>
       <HeroSkeleton art={art} />
-      {albums && <Heading />}
+      {tabs && <TabStrip />}
       <TrackListSkeleton />
-      {albums && (
-        <section className="mt-10">
-          <Heading />
-          <AlbumGridSkeleton />
-        </section>
-      )}
     </>
   );
 }

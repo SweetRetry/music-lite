@@ -30,6 +30,10 @@ reqwest = { version = "0.13.5", default-features = false, features = ["rustls", 
 tauri-plugin-window-state = "2.5.0"
 serde = { version = "1.0.229", features = ["derive"] }
 tauri-plugin-global-shortcut = "2.4.1"
+aes-gcm = "0.11.1"
+sha1 = "0.11.0"
+base64 = "0.23.1"
+plist = "1.10.1"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6.5"

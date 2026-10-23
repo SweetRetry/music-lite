@@ -1,21 +1,23 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@ncm-lite/ui/components/ui/avatar";
-import { artist } from "../api/artist";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ncm-lite/ui/components/ui/tabs";
 import { Description } from "../components/album/Description";
 import { AlbumGrid } from "../components/artist/AlbumGrid";
 import { Hero } from "../components/Hero";
+import { LoadMore, usePaged } from "../components/LoadMore";
 import { PageSkeleton } from "../components/skeletons";
 import { Notice, useCached } from "../components/states";
 import { TrackTable } from "../components/TrackTable";
 import { cover } from "../format";
+import { scoped } from "../mode";
+import { provider, useProvider } from "../providers";
 
-const Heading = ({ children }: { children: React.ReactNode }) => (
-  <h2 className="mb-3 text-base font-semibold">{children}</h2>
-);
-
-export function ArtistView({ id }: { id: number }) {
-  const { data, error } = useCached(`artist:${id}`, () => artist(id));
+export function ArtistView({ id }: { id: string }) {
+  const { data, error } = useCached(scoped(`artist:${id}`), () => provider().artist(id));
+  const { artistSongs, artistAlbums } = useProvider();
+  const songs = usePaged(data?.hotSongs ?? [], data?.songCount ?? 0, artistSongs && ((begin) => artistSongs(id, begin)));
+  const albums = usePaged(data?.albums ?? [], data?.albumCount ?? 0, artistAlbums && ((begin) => artistAlbums(id, begin)));
   if (error) return <Notice message={`歌手没加载出来。${error}`} />;
-  if (!data) return <PageSkeleton art="round" albums />;
+  if (!data) return <PageSkeleton art="round" tabs />;
   const meta = [data.alias, `${data.songCount} 首歌`, `${data.albumCount} 张专辑`].filter(Boolean).join(" · ");
   return (
     <>
@@ -28,17 +30,24 @@ export function ArtistView({ id }: { id: number }) {
         }
         title={data.name}
         meta={meta}
-        tracks={data.hotSongs}
+        tracks={songs.items}
       />
       {data.intro && <Description text={data.intro} />}
-      <Heading>热门歌曲</Heading>
-      <TrackTable tracks={data.hotSongs} />
-      {data.albums.length > 0 && (
-        <section className="mt-10">
-          <Heading>专辑</Heading>
-          <AlbumGrid albums={data.albums} />
-        </section>
-      )}
+      {/* Songs and albums can each run to hundreds, so each gets a tab and its own pages. */}
+      <Tabs defaultValue="songs">
+        <TabsList className="mb-4">
+          <TabsTrigger value="songs">热门歌曲</TabsTrigger>
+          {albums.items.length > 0 && <TabsTrigger value="albums">专辑</TabsTrigger>}
+        </TabsList>
+        <TabsContent value="songs">
+          <TrackTable tracks={songs.items} />
+          <LoadMore {...songs} />
+        </TabsContent>
+        <TabsContent value="albums">
+          <AlbumGrid albums={albums.items} />
+          <LoadMore {...albums} />
+        </TabsContent>
+      </Tabs>
     </>
   );
 }

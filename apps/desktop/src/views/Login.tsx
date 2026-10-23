@@ -1,5 +1,6 @@
-// Signed out: a QR code to scan in the NetEase Music phone app. A Mac with the official client signed in
-// can also borrow that login, as NCM Lite did before it had its own.
+// Signed out of every service. NetEase Music: a QR code to scan in its phone app, or, on a Mac with the official
+// client signed in, that login borrowed. QQ Music has no sign-in of its own: it uses the one of its Mac client,
+// so a signed-in QQ Music takes the screen before this shows.
 import { Button } from "@ncm-lite/ui/components/ui/button";
 import { Skeleton } from "@ncm-lite/ui/components/ui/skeleton";
 import { invoke } from "@tauri-apps/api/core";
@@ -23,6 +24,18 @@ const HINTS = {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export function LoginView() {
+  return (
+    <div className="flex h-full flex-col bg-background">
+      {/* A drag strip as tall as the shell's title bar, and as much again below so the card sits centred. */}
+      <div data-tauri-drag-region className="h-13 shrink-0" />
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 pb-13">
+        <NcmLogin />
+      </div>
+    </div>
+  );
+}
+
+function NcmLogin() {
   const [qr, setQr] = useState<Qr>({ status: "loading" });
   // Bumped to fetch a fresh code.
   const [round, setRound] = useState(0);
@@ -61,37 +74,33 @@ export function LoginView() {
     );
 
   return (
-    <div className="flex h-full flex-col bg-background">
-      {/* A drag strip as tall as the shell's title bar, and as much again below so the card sits centred. */}
-      <div data-tauri-drag-region className="h-13 shrink-0" />
-      <div className="flex flex-1 flex-col items-center justify-center gap-6 pb-13">
-        <h1 className="text-2xl font-semibold tracking-tight">登录 NCM Lite</h1>
-        {/* The code stays dark on white in both themes, the way phone scanners expect it. */}
-        <div className="relative size-48 overflow-hidden rounded-xl border border-border bg-white p-3">
-          {qr.status === "loading" && <Skeleton className="size-full" />}
-          {"svg" in qr && (
-            <div
-              className={`size-full transition-opacity duration-200 ease-out animate-in fade-in [&_svg]:size-full ${qr.status === "waiting" ? "" : "opacity-15"}`}
-              dangerouslySetInnerHTML={{ __html: qr.svg }}
-            />
-          )}
-          {(qr.status === "expired" || qr.status === "error") && (
-            <div className="absolute inset-0 grid place-items-center animate-in fade-in duration-200">
-              <Button size="sm" onClick={() => setRound((r) => r + 1)}>
-                刷新二维码
-              </Button>
-            </div>
-          )}
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {qr.status === "loading" ? "正在生成二维码" : qr.status === "error" ? `出错了。${qr.message}` : HINTS[qr.status]}
-        </p>
-        {official && (
-          <Button variant="ghost" size="sm" onClick={useOfficial}>
-            使用官方客户端的登录
-          </Button>
+    <>
+      <h1 className="text-2xl font-semibold tracking-tight">登录 NCM Lite</h1>
+      {/* The code stays dark on white in both themes, the way phone scanners expect it. */}
+      <div className="relative size-48 overflow-hidden rounded-xl border border-border bg-white p-3">
+        {qr.status === "loading" && <Skeleton className="size-full" />}
+        {"svg" in qr && (
+          <div
+            className={`size-full transition-opacity duration-200 ease-out animate-in fade-in [&_svg]:size-full ${qr.status === "waiting" ? "" : "opacity-15"}`}
+            dangerouslySetInnerHTML={{ __html: qr.svg }}
+          />
+        )}
+        {(qr.status === "expired" || qr.status === "error") && (
+          <div className="absolute inset-0 grid place-items-center animate-in fade-in duration-200">
+            <Button size="sm" onClick={() => setRound((r) => r + 1)}>
+              刷新二维码
+            </Button>
+          </div>
         )}
       </div>
-    </div>
+      <p className="text-sm text-muted-foreground">
+        {qr.status === "loading" ? "正在生成二维码" : qr.status === "error" ? `出错了。${qr.message}` : HINTS[qr.status]}
+      </p>
+      {official && (
+        <Button variant="ghost" size="sm" onClick={useOfficial}>
+          使用官方客户端的登录
+        </Button>
+      )}
+    </>
   );
 }

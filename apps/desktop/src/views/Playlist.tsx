@@ -4,11 +4,12 @@ import type { Playlist } from "../api";
 import { peek } from "../cache";
 import { Hero } from "../components/Hero";
 import { PlaylistMoreMenu } from "../components/playlist/actions";
+import { openPlaylistDialog } from "../components/playlist/dialogs";
 import { PageSkeleton } from "../components/skeletons";
 import { Notice } from "../components/states";
 import { TrackTable } from "../components/TrackTable";
 import { cover } from "../format";
-import { library, useLibrary } from "../library";
+import { editable, library, takenDown, useLibrary } from "../library";
 import { playlistOrigin } from "../player";
 
 // Reads the playlist from the library, so mutations show up in place. The copy on screen (opened, or
@@ -27,14 +28,32 @@ function useOpenedPlaylist(id: number) {
 
 export function PlaylistView({ id }: { id: number }) {
   const { data, error } = useOpenedPlaylist(id);
+  const mine = useLibrary((s) => editable(s.me, id));
   if (error && !data) return <Notice message={`歌单没加载出来。${error}`} />;
   if (!data) return <PageSkeleton art="square" />;
+  const gone = mine ? takenDown(data.tracks) : [];
   return (
     <>
       <Hero
         art={<img className="hero__cover" src={cover(data.cover, 120)} alt="" />}
         title={data.name}
-        meta={`${data.creator} · ${data.tracks.length} 首`}
+        meta={
+          <>
+            {data.creator} · {data.tracks.length} 首
+            {/* A quiet count that is also the way to clear them. Nothing asks. */}
+            {gone.length > 0 && (
+              <>
+                {" · "}
+                <button
+                  className="underline-offset-4 hover:text-foreground hover:underline"
+                  onClick={() => openPlaylistDialog({ kind: "prune", playlist: data, tracks: gone })}
+                >
+                  {gone.length} 首已下架
+                </button>
+              </>
+            )}
+          </>
+        }
         tracks={data.tracks}
         origin={playlistOrigin(data.id)}
       >

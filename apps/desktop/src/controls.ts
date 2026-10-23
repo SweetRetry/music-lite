@@ -14,7 +14,7 @@ const actions: Record<string, () => void> = {
   volumeDown: () => player.adjustVolume(-0.1),
   like: () => {
     const { queue, index } = usePlayer.getState();
-    if (queue[index]) library.toggleLike(queue[index].id);
+    if (queue[index]) library.toggleLike(queue[index]);
   },
 };
 

@@ -1,6 +1,6 @@
+import { Autocomplete } from "@base-ui/react/autocomplete";
 import { Avatar, AvatarFallback, AvatarImage } from "@ncm-lite/ui/components/ui/avatar";
 import {
-  Combobox,
   ComboboxCollection,
   ComboboxContent,
   ComboboxGroup,
@@ -15,18 +15,21 @@ import { useNavigate } from "@tanstack/react-router";
 import { MagnifyingGlassIcon, VinylRecordIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import { type Suggestion, type SuggestionGroup, suggest, suggestionLabel } from "../api/suggest";
+import { useProvider } from "../providers";
 
 // There is one search box, so shortcuts can focus it without threading refs through the tree.
 let input: HTMLInputElement | null = null;
 export const focusSearch = () => input?.focus();
 
 // Typing only fetches suggestions. Enter with nothing highlighted searches the typed text;
-// Enter or a click on a suggestion acts on that suggestion.
+// Enter or a click on a suggestion acts on that suggestion. The input text is the value, so this
+// is an Autocomplete. The shadcn Combobox parts render under it unchanged.
 export function SearchBox() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [groups, setGroups] = useState<SuggestionGroup[]>([]);
+  const suggestions = useProvider().can.suggest;
   const ref = useRef<HTMLInputElement>(null);
   const anchor = useRef<HTMLFormElement>(null);
 
@@ -37,32 +40,32 @@ export function SearchBox() {
 
   useEffect(() => {
     const keyword = q.trim();
-    if (!keyword) return setGroups([]);
+    if (!keyword || !suggestions) return setGroups([]);
     let live = true;
     const t = setTimeout(() => suggest(keyword).then((g) => live && setGroups(g), () => {}), 150);
     return () => {
       live = false;
       clearTimeout(t);
     };
-  }, [q]);
+  }, [q, suggestions]);
 
   const searchFor = (keyword: string) => {
     setOpen(false);
     if (keyword) navigate({ to: "/search", search: { q: keyword } });
   };
 
-  const pick = (s: Suggestion | null) => {
-    if (!s) return;
+  const pick = (s: Suggestion) => {
     setOpen(false);
     if (s.kind === "keyword") {
       setQ(s.keyword);
       searchFor(s.keyword);
-    } else if (s.kind === "artist") navigate({ to: "/artist/$id", params: { id: s.id } });
-    else navigate({ to: "/album/$id", params: { id: s.id } });
+    } else if (s.kind === "artist") navigate({ to: "/artist/$id", params: { id: String(s.id) } });
+    else navigate({ to: "/album/$id", params: { id: String(s.id) } });
   };
 
   return (
-    // Base UI lets Enter submit the form only when no suggestion is highlighted.
+    // Base UI lets Enter submit the form only when no suggestion is highlighted. It also renders a
+    // hidden input, and two text fields without a submit button disable implicit submission.
     <form
       ref={anchor}
       className="w-full max-w-md"
@@ -71,14 +74,13 @@ export function SearchBox() {
         searchFor(q.trim());
       }}
     >
-      <Combobox
+      <button type="submit" hidden />
+      <Autocomplete.Root
         items={groups}
         filter={null}
-        value={null}
-        onValueChange={pick}
-        itemToStringLabel={suggestionLabel}
-        inputValue={q}
-        onInputValueChange={(v, d) => (d.reason === "input-change" || d.reason === "input-clear") && setQ(v)}
+        value={q}
+        onValueChange={(v, d) => (d.reason === "input-change" || d.reason === "input-clear") && setQ(v)}
+        itemToStringValue={suggestionLabel}
         open={open && groups.length > 0}
         onOpenChange={setOpen}
       >
@@ -103,7 +105,11 @@ export function SearchBox() {
                 <ComboboxLabel>{group.value}</ComboboxLabel>
                 <ComboboxCollection>
                   {(s: Suggestion) => (
-                    <ComboboxItem key={`${s.kind}:${suggestionLabel(s)}:${"id" in s ? s.id : ""}`} value={s}>
+                    <ComboboxItem
+                      key={`${s.kind}:${suggestionLabel(s)}:${"id" in s ? s.id : ""}`}
+                      value={s}
+                      onClick={() => pick(s)}
+                    >
                       <SuggestionRow s={s} />
                     </ComboboxItem>
                   )}
@@ -112,7 +118,7 @@ export function SearchBox() {
             )}
           </ComboboxList>
         </ComboboxContent>
-      </Combobox>
+      </Autocomplete.Root>
     </form>
   );
 }

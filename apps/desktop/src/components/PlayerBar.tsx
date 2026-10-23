@@ -15,6 +15,7 @@ import { duration, cover } from "../format";
 import { library, useLibrary } from "../library";
 import { player, usePlayer } from "../player";
 import { useUi } from "../ui";
+import { useIsHere, useProvider } from "../providers";
 import { Artists } from "./Artists";
 import { LikeHeart } from "./LikeHeart";
 import { QualityMenu } from "./player/QualityMenu";
@@ -31,6 +32,9 @@ export function PlayerBar() {
   const onToggleLyrics = () => toggleLyrics();
   const track = s.queue[s.index];
   const disabled = !track;
+  // A song playing on from the other service has no heart or sound quality in this library.
+  const here = useIsHere(track);
+  const can = useProvider().can;
   // Unmuting restores the level from before the mute.
   const lastVolume = useRef(s.volume || 0.8);
   const muted = s.volume === 0;
@@ -58,8 +62,9 @@ export function PlayerBar() {
             </button>
             <div className="player__names">
               <span>{track.name}</span>
-              <span className="muted">{s.notice || <Artists artists={track.artists} />}</span>
+              <span className="muted">{s.notice || <Artists artists={track.artists} src={track.src} />}</span>
             </div>
+            {here && (
             <Tip
               label={liked.has(track.id) ? "取消喜欢" : "喜欢"}
               id="like"
@@ -68,12 +73,13 @@ export function PlayerBar() {
                   className="icon-btn"
                   aria-label={liked.has(track.id) ? "取消喜欢" : "喜欢"}
                   aria-pressed={liked.has(track.id)}
-                  onClick={() => library.toggleLike(track.id)}
+                  onClick={() => library.toggleLike(track)}
                 />
               }
             >
               <LikeHeart key={track.id} size={18} liked={liked.has(track.id)} />
             </Tip>
+            )}
           </>
         ) : (
           // An empty slot the size of the cover, so the bar keeps its shape. A notice still speaks.
@@ -132,7 +138,7 @@ export function PlayerBar() {
         </div>
       </div>
       <div className="player__volume">
-        <QualityMenu />
+        {here && can.quality && <QualityMenu />}
         <QueuePanel />
         <Tip
           label={muted ? "取消静音" : "静音"}

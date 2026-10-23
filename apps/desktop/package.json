@@ -9,6 +9,7 @@
     "vite": "vite"
   },
   "dependencies": {
+    "@base-ui/react": "^1.9.0",
     "@ncm-lite/ui": "workspace:*",
     "@phosphor-icons/react": "^2.1.10",
     "@tanstack/react-router": "^1.170.45",

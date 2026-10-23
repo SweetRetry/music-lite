@@ -78,7 +78,7 @@ export const shortcuts = {
     group: "播放",
     run: () => {
       const { queue, index } = usePlayer.getState();
-      library.toggleLike(queue[index].id);
+      library.toggleLike(queue[index]);
     },
     when: hasTrack,
     inputs: true,

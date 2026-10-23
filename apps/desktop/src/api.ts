@@ -2,8 +2,13 @@
 // Raw NetEase payloads are normalized here so the UI only ever sees Track and Playlist.
 import { eapi } from "./eapi";
 import { levelOf, type Quality } from "./api/quality";
+import type { ProviderId } from "./mode";
 
-export type Ref = { id: number; name: string };
+// QQ Music names its artists and albums by a mid, a string, next to the numeric id.
+export type Ref = { id: number; name: string; mid?: string };
+
+// What an artist or album page is addressed by.
+export const pageId = (r: Ref) => r.mid ?? String(r.id);
 
 export type Track = {
   id: number;
@@ -18,6 +23,10 @@ export type Track = {
   // Optional because copies cached before this field existed lack it.
   unavailable?: boolean;
   reason?: string;
+  // Which service the song comes from. Absent means NetEase, which is what copies cached before QQ Music had.
+  src?: ProviderId;
+  // QQ Music plays and edits a song by its mid, a string, next to the numeric id.
+  mid?: string;
 };
 
 export type LyricWord = { ms: number; durationMs: number; text: string };
@@ -121,7 +130,7 @@ export async function daily(): Promise<Track[]> {
 }
 
 // LRC lines may carry several timestamps. Credit lines arrive as JSON objects and are dropped.
-function parseLrc(lrc = ""): Map<number, string> {
+export function parseLrc(lrc = ""): Map<number, string> {
   const lines = new Map<number, string>();
   for (const row of lrc.split("\n")) {
     const stamps = [...row.matchAll(/\[(\d+):(\d+(?:\.\d+)?)\]/g)];

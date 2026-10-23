@@ -1,8 +1,11 @@
 // Theme preference. The dark tokens live under .dark on <html>; "system" sets it from prefers-color-scheme
-// and follows changes. index.html applies the saved value before first paint. Keep KEY in sync with it.
+// and follows changes. The brand is the other axis: the music service on screen sets data-brand on <html>,
+// and the palette for it lives in the ui package's globals.css. index.html applies both saved values before
+// first paint. Keep KEY and the mode key in sync with it.
 import { isTauri } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { create } from "zustand";
+import { useMode } from "./mode";
 
 export type Theme = "system" | "light" | "dark";
 
@@ -39,3 +42,8 @@ export const useTheme = create<{ theme: Theme; setTheme: (theme: Theme) => void 
 
 apply(useTheme.getState().theme);
 systemDark.addEventListener("change", () => apply(useTheme.getState().theme));
+
+// One brand per service, named after its mode.
+const applyBrand = (brand: string) => void (document.documentElement.dataset.brand = brand);
+applyBrand(useMode.getState().mode);
+useMode.subscribe((s) => applyBrand(s.mode));

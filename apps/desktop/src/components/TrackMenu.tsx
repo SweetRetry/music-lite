@@ -33,10 +33,11 @@ import {
   VinylRecordIcon,
 } from "@phosphor-icons/react";
 import { useNavigate } from "@tanstack/react-router";
-import type { PlaylistSummary, Track } from "../api";
+import { type PlaylistSummary, type Track, pageId } from "../api";
 import { toast } from "sonner";
 import { editable, library, useLibrary } from "../library";
 import { player } from "../player";
+import { useProvider } from "../providers";
 import { failed, openPlaylistDialog } from "./playlist/dialogs";
 
 export type TrackAction =
@@ -57,6 +58,7 @@ export function useTrackActions({ tracks, index, playlist, origin }: TrackContex
   const liked = useLibrary((s) => s.liked.has(track.id));
   const me = useLibrary((s) => s.me);
   const navigate = useNavigate();
+  const browse = useProvider().can.browse;
   // The liked playlist is left to 喜欢, and the playlist on screen already has the song.
   const targets = me?.playlists.filter((p) => p.mine && !p.liked && p.id !== playlist?.id) ?? [];
   const addTo = (pid: number, name: string) =>
@@ -64,6 +66,18 @@ export function useTrackActions({ tracks, index, playlist, origin }: TrackContex
       () => toast.success(`已添加到「${name}」`),
       (e) => failed("没能添加到歌单", e),
     );
+  const toArtist = (a: Track["artists"][number]): TrackAction => ({
+    kind: "item",
+    label: a.name,
+    onSelect: () => navigate({ to: "/artist/$id", params: { id: pageId(a) } }),
+  });
+  // One artist is one row. Several fold into a submenu, so a long credit list does not make a long menu.
+  const artistActions = (): TrackAction[] => {
+    if (!browse) return [];
+    const artists = track.artists.filter((a) => a.id);
+    if (artists.length < 2) return artists.map((a) => ({ ...toArtist(a), label: `歌手：${a.name}`, icon: UserIcon }));
+    return [{ kind: "sub", label: "歌手", icon: UserIcon, items: artists.map(toArtist) }];
+  };
   return [
     ...(track.unavailable
       ? []
@@ -75,7 +89,7 @@ export function useTrackActions({ tracks, index, playlist, origin }: TrackContex
       kind: "item",
       label: liked ? "取消喜欢" : "喜欢",
       icon: liked ? HeartBreakIcon : HeartIcon,
-      onSelect: () => library.toggleLike(track.id),
+      onSelect: () => library.toggleLike(track),
     },
     {
       kind: "sub",
@@ -99,26 +113,19 @@ export function useTrackActions({ tracks, index, playlist, origin }: TrackContex
             label: "从歌单中删除",
             icon: TrashIcon,
             onSelect: () =>
-              library.removeTracks(playlist.id, [track.id]).catch((e) => failed("没能从歌单中删除，已放回", e)),
+              library.removeTracks(playlist.id, [track]).catch((e) => failed("没能从歌单中删除，已放回", e)),
           } satisfies TrackAction,
         ]
       : []),
-    { kind: "separator" },
-    ...track.artists
-      .filter((a) => a.id)
-      .map((a): TrackAction => ({
-        kind: "item",
-        label: `歌手：${a.name}`,
-        icon: UserIcon,
-        onSelect: () => navigate({ to: "/artist/$id", params: { id: a.id } }),
-      })),
-    ...(track.album.id
+    ...(browse ? [{ kind: "separator" } satisfies TrackAction] : []),
+    ...artistActions(),
+    ...(track.album.id && browse
       ? [
           {
             kind: "item",
             label: `专辑：${track.album.name}`,
             icon: VinylRecordIcon,
-            onSelect: () => navigate({ to: "/album/$id", params: { id: track.album.id } }),
+            onSelect: () => navigate({ to: "/album/$id", params: { id: pageId(track.album) } }),
           } satisfies TrackAction,
         ]
       : []),
@@ -133,7 +140,7 @@ function ContextItems({ actions }: { actions: TrackAction[] }) {
       <ContextMenuSub key={i}>
         <ContextMenuSubTrigger>
           <a.icon />
-          {a.label}
+          <span className="truncate">{a.label}</span>
         </ContextMenuSubTrigger>
         <ContextMenuSubContent>
           <ContextItems actions={a.items} />
@@ -142,7 +149,7 @@ function ContextItems({ actions }: { actions: TrackAction[] }) {
     ) : (
       <ContextMenuItem key={i} onClick={a.onSelect}>
         {a.icon && <a.icon />}
-        {a.label}
+        <span className="truncate">{a.label}</span>
       </ContextMenuItem>
     ),
   );
@@ -156,7 +163,7 @@ function DropdownItems({ actions }: { actions: TrackAction[] }) {
       <DropdownMenuSub key={i}>
         <DropdownMenuSubTrigger>
           <a.icon />
-          {a.label}
+          <span className="truncate">{a.label}</span>
         </DropdownMenuSubTrigger>
         <DropdownMenuSubContent>
           <DropdownItems actions={a.items} />
@@ -165,7 +172,7 @@ function DropdownItems({ actions }: { actions: TrackAction[] }) {
     ) : (
       <DropdownMenuItem key={i} onClick={a.onSelect}>
         {a.icon && <a.icon />}
-        {a.label}
+        <span className="truncate">{a.label}</span>
       </DropdownMenuItem>
     ),
   );

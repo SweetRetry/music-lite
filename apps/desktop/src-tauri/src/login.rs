@@ -51,12 +51,3 @@ pub fn login_official() -> Result<(), String> {
     session::store(&Login::Official)
 }
 
-// Our own login is also ended on the server. The official client's stays, it belongs to that app.
-#[tauri::command]
-pub async fn logout() -> Result<(), String> {
-    if let (Some(s), true) = (session::current(), session::is_own()) {
-        let _ = send("/api/logout", Map::new(), Some(&s)).await;
-    }
-    session::store(&Login::SignedOut)
-}
-

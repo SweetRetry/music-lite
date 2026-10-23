@@ -30,20 +30,23 @@ import {
 } from "@ncm-lite/ui/components/ui/field";
 import { Input } from "@ncm-lite/ui/components/ui/input";
 import { Switch } from "@ncm-lite/ui/components/ui/switch";
-import { TrashIcon } from "@phosphor-icons/react";
+import { BroomIcon, TrashIcon } from "@phosphor-icons/react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { create } from "zustand";
-import type { PlaylistSummary } from "../../api";
+import type { PlaylistSummary, Track } from "../../api";
 import { reason } from "../../api/playlists";
 import { library } from "../../library";
+import { useProvider } from "../../providers";
 
 type Request =
   // onCreated replaces the default of opening the new playlist.
   | { kind: "create"; onCreated?: (id: number, name: string) => void }
   | { kind: "rename"; playlist: PlaylistSummary }
-  | { kind: "delete"; playlist: PlaylistSummary };
+  | { kind: "delete"; playlist: PlaylistSummary }
+  // The taken-down songs of an open playlist, to be removed from it.
+  | { kind: "prune"; playlist: PlaylistSummary; tracks: Track[] };
 
 const useRequest = create<{ request: Request | null }>(() => ({ request: null }));
 
@@ -61,6 +64,7 @@ export function PlaylistDialogs() {
     <>
       <NameDialog request={request} />
       <DeleteDialog request={request?.kind === "delete" ? request : null} />
+      <PruneDialog request={request?.kind === "prune" ? request : null} />
     </>
   );
 }
@@ -81,6 +85,7 @@ function NameDialog({ request }: { request: Request | null }) {
 function NameForm({ request }: { request: Request }) {
   const renaming = request.kind === "rename" ? request.playlist : null;
   const navigate = useNavigate();
+  const canPrivate = useProvider().can.private;
   const [name, setName] = useState(renaming?.name ?? "");
   const [isPrivate, setPrivate] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -128,7 +133,7 @@ function NameForm({ request }: { request: Request }) {
           />
           {error && <FieldError>{error}</FieldError>}
         </Field>
-        {!renaming && (
+        {!renaming && canPrivate && (
           <Field orientation="horizontal">
             <FieldContent>
               <FieldLabel htmlFor="playlist-private">隐私歌单</FieldLabel>
@@ -183,6 +188,55 @@ function DeleteDialog({ request }: { request: Extract<Request, { kind: "delete" 
           <AlertDialogCancel>取消</AlertDialogCancel>
           <AlertDialogAction variant="destructive" disabled={busy} onClick={confirm}>
             删除
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+// Taken-down songs stay in a playlist and play nothing. Clearing them is the user's call, so this only opens
+// from a quiet count and the menu, never on its own.
+function PruneDialog({ request }: { request: Extract<Request, { kind: "prune" }> | null }) {
+  const [busy, setBusy] = useState(false);
+  // Keeps the last request while the dialog closes, so the text does not blank out mid-fade.
+  const [last, setLast] = useState(request);
+  if (request && request !== last) setLast(request);
+  const shown = request ?? last;
+  const names = shown?.tracks.slice(0, 3).map((t) => t.name).join("、");
+  const more = (shown?.tracks.length ?? 0) - 3;
+
+  async function confirm() {
+    if (!request || busy) return;
+    setBusy(true);
+    try {
+      await library.removeTracks(request.playlist.id, request.tracks);
+      toast.success(`已清理 ${request.tracks.length} 首已下架的歌曲`);
+      close();
+    } catch (e) {
+      failed("没能清理，已放回", e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <AlertDialog open={!!request} onOpenChange={(o) => !o && close()}>
+      <AlertDialogContent size="sm">
+        <AlertDialogHeader>
+          <AlertDialogMedia>
+            <BroomIcon />
+          </AlertDialogMedia>
+          <AlertDialogTitle>清理已下架的歌曲</AlertDialogTitle>
+          <AlertDialogDescription>
+            「{shown?.playlist.name}」里有 {shown?.tracks.length} 首已下架的歌曲，如 {names}
+            {more > 0 && ` 等`}。清理后它们会从歌单中移除。
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>先不了</AlertDialogCancel>
+          <AlertDialogAction variant="destructive" disabled={busy} onClick={confirm}>
+            清理
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

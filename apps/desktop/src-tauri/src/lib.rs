@@ -2,6 +2,9 @@ mod eapi;
 mod login;
 #[cfg(target_os = "macos")]
 mod macos;
+mod qq;
+mod qq_session;
+mod qq_sign;
 mod session;
 mod shortcuts;
 mod tray;
@@ -43,7 +46,8 @@ pub fn run() {
             login::login_qr_poll,
             login::login_official_available,
             login::login_official,
-            login::logout,
+            qq::qq_login,
+            qq::qqapi,
         ])
         .build(tauri::generate_context!())
         .expect("error while running NCM Lite")

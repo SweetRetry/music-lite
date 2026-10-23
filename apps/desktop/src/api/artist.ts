@@ -5,7 +5,7 @@ import { eapi } from "../eapi";
 import { type AlbumCard, toAlbumCard } from "./album";
 
 export type Artist = {
-  id: number;
+  id: string;
   name: string;
   alias: string;
   intro: string;
@@ -16,7 +16,7 @@ export type Artist = {
   albums: AlbumCard[];
 };
 
-export async function artist(id: number): Promise<Artist> {
+export async function artist(id: string): Promise<Artist> {
   const [detail, albums] = await Promise.all([
     eapi(`/api/v1/artist/${id}`),
     eapi(`/api/artist/albums/${id}`, { limit: 100, offset: 0 }),

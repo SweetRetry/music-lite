@@ -5,37 +5,51 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
   ContextMenuTrigger,
 } from "@ncm-lite/ui/components/ui/context-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@ncm-lite/ui/components/ui/dropdown-menu";
 import {
   DotsThreeIcon,
+  BroomIcon,
   FolderSimpleMinusIcon,
   FolderSimplePlusIcon,
   type Icon,
   PencilSimpleIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
+import { Fragment } from "react";
 import { toast } from "sonner";
 import type { PlaylistSummary } from "../../api";
-import { editable, library, useLibrary } from "../../library";
+import { editable, library, takenDown, useLibrary } from "../../library";
 import { failed, openPlaylistDialog } from "./dialogs";
 
-type Action = { label: string; icon: Icon; run: () => void; destructive?: boolean };
+// hint is a quiet count at the row's end. A destructive action sits apart from the rest.
+type Action = { label: string; icon: Icon; run: () => void; destructive?: boolean; hint?: number };
 
 function usePlaylistActions(playlist: PlaylistSummary): Action[] {
   const me = useLibrary((s) => s.me);
+  const opened = useLibrary((s) => s.opened[playlist.id]);
   if (!me) return [];
-  if (editable(me, playlist.id))
+  if (editable(me, playlist.id)) {
+    // Only a playlist that has been opened has its songs to look through.
+    const gone = takenDown(opened?.tracks ?? []);
     return [
       { label: "重命名", icon: PencilSimpleIcon, run: () => openPlaylistDialog({ kind: "rename", playlist }) },
+      ...(gone.length
+        ? [{ label: "清理已下架歌曲", hint: gone.length, icon: BroomIcon, run: () => openPlaylistDialog({ kind: "prune", playlist, tracks: gone }) }]
+        : []),
       { label: "删除歌单", icon: TrashIcon, run: () => openPlaylistDialog({ kind: "delete", playlist }), destructive: true },
     ];
+  }
   const own = me.playlists.find((p) => p.id === playlist.id)?.mine ?? false;
   if (own) return [];
   const collected = me.playlists.some((p) => p.id === playlist.id);
@@ -64,11 +78,15 @@ export function PlaylistContextMenu({
     <ContextMenu>
       <ContextMenuTrigger render={children} />
       <ContextMenuContent>
-        {actions.map((a) => (
-          <ContextMenuItem key={a.label} variant={a.destructive ? "destructive" : "default"} onClick={a.run}>
-            <a.icon />
-            {a.label}
-          </ContextMenuItem>
+        {actions.map((a, i) => (
+          <Fragment key={a.label}>
+            {a.destructive && i > 0 && <ContextMenuSeparator />}
+            <ContextMenuItem variant={a.destructive ? "destructive" : "default"} onClick={a.run}>
+              <a.icon />
+              {a.label}
+              {a.hint !== undefined && <ContextMenuShortcut className="tracking-normal tabular-nums">{a.hint}</ContextMenuShortcut>}
+            </ContextMenuItem>
+          </Fragment>
         ))}
       </ContextMenuContent>
     </ContextMenu>
@@ -84,11 +102,15 @@ export function PlaylistMoreMenu({ playlist }: { playlist: PlaylistSummary }) {
         <DotsThreeIcon weight="bold" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
-        {actions.map((a) => (
-          <DropdownMenuItem key={a.label} variant={a.destructive ? "destructive" : "default"} onClick={a.run}>
-            <a.icon />
-            {a.label}
-          </DropdownMenuItem>
+        {actions.map((a, i) => (
+          <Fragment key={a.label}>
+            {a.destructive && i > 0 && <DropdownMenuSeparator />}
+            <DropdownMenuItem variant={a.destructive ? "destructive" : "default"} onClick={a.run}>
+              <a.icon />
+              {a.label}
+              {a.hint !== undefined && <DropdownMenuShortcut className="tracking-normal tabular-nums">{a.hint}</DropdownMenuShortcut>}
+            </DropdownMenuItem>
+          </Fragment>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
