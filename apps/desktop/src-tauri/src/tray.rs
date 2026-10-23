@@ -30,12 +30,12 @@ pub fn create(app: &AppHandle) -> tauri::Result<()> {
             &MenuItem::with_id(app, "next", "下一首", true, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
             &MenuItem::with_id(app, "show", "显示主窗口", true, None::<&str>)?,
-            &MenuItem::with_id(app, "quit", "退出 NCM Lite", true, None::<&str>)?,
+            &MenuItem::with_id(app, "quit", "退出 Music Lite", true, None::<&str>)?,
         ],
     )?;
 
     let mut tray = TrayIconBuilder::with_id("main")
-        .tooltip("NCM Lite")
+        .tooltip("Music Lite")
         .menu(&menu)
         // macOS opens the menu on a left click, as menu bar items do. Elsewhere a left click brings the window back.
         .show_menu_on_left_click(cfg!(target_os = "macos"))
@@ -68,7 +68,7 @@ pub fn now_playing(app: AppHandle, title: Option<String>, playing: bool) -> taur
     tray.toggle.set_text(if playing { "暂停" } else { "播放" })?;
     tray.toggle.set_enabled(title.is_some())?;
     if let Some(icon) = app.tray_by_id("main") {
-        icon.set_tooltip(Some(title.as_deref().unwrap_or("NCM Lite")))?;
+        icon.set_tooltip(Some(title.as_deref().unwrap_or("Music Lite")))?;
     }
     Ok(())
 }

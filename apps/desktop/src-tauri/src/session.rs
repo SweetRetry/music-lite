@@ -1,4 +1,4 @@
-// Where the login comes from. NCM Lite's own QR login is kept in login.json in the app data dir. Until the
+// Where the login comes from. Music Lite's own QR login is kept in login.json in the app data dir. Until the
 // user signs in or out here, the official macOS client's login is reused by reading its cookie jar, on every
 // request, so signing in again there takes effect without a restart.
 // The cookie stays in this process and only ever travels to music.163.com.
@@ -86,7 +86,7 @@ pub fn init(data_dir: PathBuf) {
     let _ = FILE.set(data_dir.join("login.json"));
 }
 
-// A missing or unreadable file is the state before NCM Lite had a login of its own.
+// A missing or unreadable file is the state before Music Lite had a login of its own.
 fn stored() -> Login {
     FILE.get()
         .and_then(|f| std::fs::read(f).ok())

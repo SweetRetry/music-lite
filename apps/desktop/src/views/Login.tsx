@@ -75,7 +75,7 @@ function NcmLogin() {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold tracking-tight">登录 NCM Lite</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">登录 Music Lite</h1>
       {/* The code stays dark on white in both themes, the way phone scanners expect it. */}
       <div className="relative size-48 overflow-hidden rounded-xl border border-border bg-white p-3">
         {qr.status === "loading" && <Skeleton className="size-full" />}

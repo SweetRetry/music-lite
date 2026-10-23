@@ -1,6 +1,6 @@
-# NCM Lite
+# Music Lite
 
-网易云音乐的轻量客户端。只保留听歌、歌词、每日推荐、歌单、搜索，接口仍是网易云官方的。
+网易云音乐与 QQ 音乐的轻量客户端。保留听歌、音质切换、歌词、每日推荐、歌单和搜索，使用各自官方接口。侧栏显示会员类型与到期日期。
 
 ```bash
 pnpm install
@@ -10,7 +10,11 @@ pnpm build   # 打包到 apps/desktop/src-tauri/target/release/bundle
 
 需要 Node、pnpm 和 Rust 工具链。
 
-前提是官方 macOS 客户端已登录。NCM Lite 会读取它的 cookie 复用登录态，只在原生进程里用，不会进入网页层。
+网易云支持扫码登录，也可复用官方 macOS 客户端登录。QQ 音乐复用官方 macOS 客户端登录。登录票据只在原生进程里使用，不会进入网页层。
+
+首次读取 QQ 音乐登录时，权限不足会弹出系统文件授权窗口。取消后可从账号菜单重新授权。
+
+播放栏支持单曲循环、列表循环和随机播放，两种服务共用本地播放队列并记住所选方式。随机播放按轮洗牌，同轮不重复，上一首沿播放历史返回。
 
 ## 怎么来的
 
@@ -19,7 +23,7 @@ pnpm build   # 打包到 apps/desktop/src-tauri/target/release/bundle
 
 ## 结构
 
-- `apps/desktop` 是 Tauri 应用。`src` 是 React 界面，`src-tauri` 是 Rust 原生层，只暴露一个 `eapi` 命令。
+- `apps/desktop` 是 Tauri 应用。`src` 是 React 界面，`src-tauri` 是 Rust 原生层，负责两个服务的通信、登录与系统集成。
 - `packages/ui` 是 shadcn 组件和主题 token。加组件在这个目录跑 `pnpm dlx shadcn@latest add <name>`。
 
 ## 快捷键

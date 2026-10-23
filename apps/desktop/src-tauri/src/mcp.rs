@@ -89,7 +89,7 @@ fn answer(msg: &Value, forward: &dyn Fn(&str, &Value) -> Reply) -> Option<Value>
             // Nothing here differs between the versions in use, so the client's own is accepted.
             "protocolVersion": params["protocolVersion"].as_str().unwrap_or(VERSION),
             "capabilities": { "tools": {} },
-            "serverInfo": { "name": "ncm-lite", "version": env!("CARGO_PKG_VERSION") },
+            "serverInfo": { "name": "music-lite", "version": env!("CARGO_PKG_VERSION") },
         }),
         "ping" => json!({}),
         "tools/list" => match forward(method, params) {
@@ -111,7 +111,7 @@ fn forward(app: &AppHandle, method: &str, params: &Value) -> Reply {
     let reply = app
         .emit("mcp", json!({ "id": id, "method": method, "params": params }))
         .map_err(|e| e.to_string())
-        .and_then(|_| rx.recv_timeout(TIMEOUT).map_err(|_| "NCM Lite 没有回应".to_string()))
+        .and_then(|_| rx.recv_timeout(TIMEOUT).map_err(|_| "Music Lite 没有回应".to_string()))
         .and_then(|r| r);
     PENDING.lock().unwrap().remove(&id);
     reply

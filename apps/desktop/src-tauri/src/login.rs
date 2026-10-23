@@ -1,4 +1,4 @@
-// NCM Lite's own login: a QR code scanned in the NetEase Music phone app. The web layer asks for the code
+// Music Lite's own login: a QR code scanned in the NetEase Music phone app. The web layer asks for the code
 // through eapi (/api/login/qrcode/unikey) and polls here, because a confirmed scan returns the login cookie,
 // which must not reach the webview.
 use serde_json::Map;
