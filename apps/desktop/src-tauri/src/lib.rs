@@ -14,6 +14,32 @@ mod tray;
 use tauri::{Manager, WindowEvent};
 use tauri_plugin_window_state::StateFlags;
 
+// Puts the lyrics island at the top middle of the screen, sized width by height points, and returns the notch.
+#[tauri::command]
+fn island_place(window: tauri::WebviewWindow, width: f64, height: f64) -> Result<serde_json::Value, String> {
+    #[cfg(target_os = "macos")]
+    {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let w = window.clone();
+        window
+            .run_on_main_thread(move || {
+                let _ = tx.send(macos::place_island(&w, width, height).map_err(|e| e.to_string()));
+            })
+            .map_err(|e| e.to_string())?;
+        let notch = rx.recv().map_err(|e| e.to_string())??;
+        serde_json::to_value(notch).map_err(|e| e.to_string())
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let monitor = window.primary_monitor().map_err(|e| e.to_string())?.ok_or("no monitor")?;
+        let scale = monitor.scale_factor();
+        let x = monitor.position().x as f64 / scale + (monitor.size().width as f64 / scale - width) / 2.0;
+        window.set_size(tauri::LogicalSize::new(width, height)).map_err(|e| e.to_string())?;
+        window.set_position(tauri::LogicalPosition::new(x, monitor.position().y as f64 / scale)).map_err(|e| e.to_string())?;
+        Ok(serde_json::json!({ "width": 0, "height": 0 }))
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -22,6 +48,8 @@ pub fn run() {
         .plugin(
             tauri_plugin_window_state::Builder::default()
                 .with_state_flags(StateFlags::all() - StateFlags::VISIBLE)
+                // The lyrics island places itself.
+                .with_denylist(&["lyrics-island"])
                 .build(),
         )
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
@@ -50,6 +78,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             eapi::eapi,
             tray::now_playing,
+            island_place,
             login::login_qr_poll,
             login::login_official_available,
             login::login_official,

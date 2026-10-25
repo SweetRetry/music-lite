@@ -18,6 +18,8 @@ const actions: Record<string, () => void> = {
     if (queue[index]) library.toggleLike(queue[index]);
   },
   desktopLyrics: () => useUi.getState().toggleDesktopLyrics(),
+  lyricsBar: () => useUi.getState().setDesktopLyricsMode("bar"),
+  lyricsIsland: () => useUi.getState().setDesktopLyricsMode("island"),
 };
 
 if (isTauri()) {
