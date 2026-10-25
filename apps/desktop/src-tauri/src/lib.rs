@@ -37,9 +37,12 @@ pub fn run() {
             mcp::serve(app.handle().clone());
             Ok(())
         })
-        // Closing the window hides it and the music keeps playing. Quit from the tray menu or with Cmd+Q.
+        // Closing the main window hides it and the music keeps playing. Quit from the tray menu or with Cmd+Q.
+        // The desktop lyrics window closes for real.
         .on_window_event(|window, event| {
-            if let WindowEvent::CloseRequested { api, .. } = event {
+            if let WindowEvent::CloseRequested { api, .. } = event
+                && window.label() == "main"
+            {
                 api.prevent_close();
                 let _ = window.hide();
             }

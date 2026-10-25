@@ -9,6 +9,7 @@ import {
   SpeakerHighIcon,
   SpeakerLowIcon,
   SpeakerXIcon,
+  SubtitlesIcon,
 } from "@phosphor-icons/react";
 import { useRef } from "react";
 import { duration, cover } from "../format";
@@ -27,7 +28,7 @@ import { Tip } from "./ShortcutKeys";
 export function PlayerBar() {
   const s = usePlayer();
   const liked = useLibrary((l) => l.liked);
-  const { lyricsOpen, toggleLyrics } = useUi();
+  const { lyricsOpen, toggleLyrics, desktopLyricsOpen, toggleDesktopLyrics } = useUi();
   // Lyrics take the whole window, and the bar floats over them. Without a song there are no lyrics to show.
   const immersive = lyricsOpen && !!s.queue[s.index];
   const onToggleLyrics = () => toggleLyrics();
@@ -142,6 +143,19 @@ export function PlayerBar() {
       <div className="player__volume">
         {here && service.qualities.length > 0 && <QualityMenu />}
         <QueuePanel />
+        <Tip
+          label={desktopLyricsOpen ? "关闭桌面歌词" : "桌面歌词"}
+          render={
+            <button
+              className="icon-btn"
+              aria-label="桌面歌词"
+              aria-pressed={desktopLyricsOpen}
+              onClick={() => toggleDesktopLyrics()}
+            />
+          }
+        >
+          <SubtitlesIcon size={18} />
+        </Tip>
         <Tip
           label={muted ? "取消静音" : "静音"}
           render={<button className="icon-btn" aria-label={muted ? "取消静音" : "静音"} onClick={toggleMute} />}

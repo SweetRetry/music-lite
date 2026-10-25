@@ -1,12 +1,14 @@
 // The menu bar (tray) icon. Playback items are forwarded to the web layer as a "control" event carrying the
-// item id, because the player lives there. The web layer reports what is playing back through now_playing.
-use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
+// item id, because the player lives there. The web layer reports what is playing, and whether the desktop
+// lyrics are open, back through now_playing.
+use tauri::menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Emitter, Manager, Wry};
 
 pub struct Tray {
     song: MenuItem<Wry>,
     toggle: MenuItem<Wry>,
+    lyrics: CheckMenuItem<Wry>,
 }
 
 pub fn show_main(app: &AppHandle) {
@@ -20,6 +22,8 @@ pub fn show_main(app: &AppHandle) {
 pub fn create(app: &AppHandle) -> tauri::Result<()> {
     let song = MenuItem::with_id(app, "song", "未在播放", false, None::<&str>)?;
     let toggle = MenuItem::with_id(app, "toggle", "播放", true, None::<&str>)?;
+    // Ticks itself on click; now_playing then sets it to what the web layer actually did.
+    let lyrics = CheckMenuItem::with_id(app, "desktopLyrics", "桌面歌词", true, false, None::<&str>)?;
     let menu = Menu::with_items(
         app,
         &[
@@ -29,6 +33,7 @@ pub fn create(app: &AppHandle) -> tauri::Result<()> {
             &MenuItem::with_id(app, "prev", "上一首", true, None::<&str>)?,
             &MenuItem::with_id(app, "next", "下一首", true, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
+            &lyrics,
             &MenuItem::with_id(app, "show", "显示主窗口", true, None::<&str>)?,
             &MenuItem::with_id(app, "quit", "退出 Music Lite", true, None::<&str>)?,
         ],
@@ -57,16 +62,17 @@ pub fn create(app: &AppHandle) -> tauri::Result<()> {
         tray = tray.icon(icon.clone());
     }
     tray.build(app)?;
-    app.manage(Tray { song, toggle });
+    app.manage(Tray { song, toggle, lyrics });
     Ok(())
 }
 
 #[tauri::command]
-pub fn now_playing(app: AppHandle, title: Option<String>, playing: bool) -> tauri::Result<()> {
+pub fn now_playing(app: AppHandle, title: Option<String>, playing: bool, lyrics: bool) -> tauri::Result<()> {
     let tray = app.state::<Tray>();
     tray.song.set_text(title.as_deref().unwrap_or("未在播放"))?;
     tray.toggle.set_text(if playing { "暂停" } else { "播放" })?;
     tray.toggle.set_enabled(title.is_some())?;
+    tray.lyrics.set_checked(lyrics)?;
     if let Some(icon) = app.tray_by_id("main") {
         icon.set_tooltip(Some(title.as_deref().unwrap_or("Music Lite")))?;
     }
