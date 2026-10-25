@@ -1,20 +1,12 @@
-// The desktop lyrics window, as a bar or (#island) as an island at the top of the screen. It holds no player:
+// A desktop lyrics window: the bar, or (#island=<screen>) the island at the top of a screen. It holds no player:
 // the main window sends the song and the clock (see desktopLyrics.ts), and the buttons here go back as the
 // same "control" events the tray sends.
 import "@music-lite/ui/globals.css";
 import { Button } from "@music-lite/ui/components/ui/button";
-import {
-  ArrowLineDownIcon,
-  ArrowLineUpIcon,
-  PauseIcon,
-  PlayIcon,
-  SkipBackIcon,
-  SkipForwardIcon,
-  XIcon,
-} from "@phosphor-icons/react";
+import { PauseIcon, PlayIcon, SkipBackIcon, SkipForwardIcon, XIcon } from "@phosphor-icons/react";
 import { invoke } from "@tauri-apps/api/core";
 import { emit, listen } from "@tauri-apps/api/event";
-import { cursorPosition, getCurrentWindow } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { type RefObject, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import type { LyricLine } from "./api";
@@ -113,8 +105,8 @@ function Transport({ playing }: { playing: boolean }) {
   );
 }
 
-const CloseButton = () => (
-  <Button variant="ghost" size="icon-sm" className="text-white" aria-label="关闭桌面歌词" title="关闭桌面歌词" onClick={control("desktopLyrics")}>
+const CloseButton = ({ label, action }: { label: string; action: string }) => (
+  <Button variant="ghost" size="icon-sm" className="text-white" aria-label={label} title={label} onClick={control(action)}>
     <XIcon />
   </Button>
 );
@@ -137,11 +129,8 @@ function Bar() {
       onMouseDown={onMouseDown}
     >
       <div className="absolute top-2 flex gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-        <Button variant="ghost" size="icon-sm" className="text-white" aria-label="切换为灵动岛" title="切换为灵动岛" onClick={control("lyricsIsland")}>
-          <ArrowLineUpIcon />
-        </Button>
         <Transport playing={playing} />
-        <CloseButton />
+        <CloseButton label="关闭桌面歌词" action="desktopLyrics" />
       </div>
       {/* A drop shadow, not a text shadow: a text shadow would paint over the word fill. */}
       <div className="grid w-full gap-[2vh] drop-shadow-[0_1px_3px_rgb(0_0_0/0.7)]" ref={lineRef}>
@@ -169,48 +158,48 @@ function Beat({ playing }: { playing: boolean }) {
   );
 }
 
-// The island window is fixed at this size, in points, and placed at the top middle of the screen by Rust.
+// The island window is fixed at this size, in points, and placed at the top middle of its screen by Rust.
 // The island inside grows to the expanded size; the rest of the window is see-through and lets clicks pass.
 const WINDOW = { width: 500, height: 260 };
-const COMPACT_WIDTH = 320;
 const EXPANDED_WIDTH = 460;
+// Either side of the notch: room for the cover on the left and the beat on the right.
+const WING = 36;
 // A pause before folding, so brushing past the edge does not snap it shut.
 const LEAVE_MS = 200;
 
-type Notch = { width: number; height: number };
+type Notch = { width: number; height: number; bar: number };
 
-// The window cannot see the mouse while it lets clicks through, so it asks where the cursor is instead. Over
-// the island it takes clicks and opens; elsewhere it passes them on and folds.
-function useHover(target: RefObject<HTMLElement | null>, placed: boolean) {
-  const [open, setOpen] = useState(false);
+// The window cannot see the mouse while it lets clicks through, so it asks where the cursor is instead.
+function useOver(target: RefObject<HTMLElement | null>, placed: boolean) {
+  const [over, setOver] = useState(false);
   useEffect(() => {
     if (!placed) return;
-    const win = getCurrentWindow();
-    let origin: { x: number; y: number; scale: number } | null = null;
-    let inside = false;
-    let leftAt = 0;
     let busy = false;
-    Promise.all([win.outerPosition(), win.scaleFactor()]).then(([p, scale]) => (origin = { x: p.x, y: p.y, scale }));
-    win.setIgnoreCursorEvents(true);
     const id = setInterval(async () => {
       const el = target.current;
-      if (!origin || !el || busy) return;
+      if (!el || busy) return;
       busy = true;
-      const c = await cursorPosition().finally(() => (busy = false));
-      const x = (c.x - origin.x) / origin.scale;
-      const y = (c.y - origin.y) / origin.scale;
+      const [x, y] = await invoke<[number, number]>("window_cursor").finally(() => (busy = false));
       const r = el.getBoundingClientRect();
-      const over = x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
-      if (over) leftAt = 0;
-      else if (inside && !leftAt) leftAt = Date.now();
-      const next = over || (inside && Date.now() - leftAt < LEAVE_MS);
-      if (next === inside) return;
-      inside = next;
-      win.setIgnoreCursorEvents(!inside);
-      setOpen(inside);
+      setOver(x >= r.left && x <= r.right && y >= r.top && y <= r.bottom);
     }, 50);
     return () => clearInterval(id);
   }, [placed]);
+  return over;
+}
+
+// Over the island it takes clicks and opens; elsewhere it passes them on and folds, after a pause.
+function useOpen(target: RefObject<HTMLElement | null>, placed: boolean) {
+  const over = useOver(target, placed);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (over) return setOpen(true);
+    const t = setTimeout(() => setOpen(false), LEAVE_MS);
+    return () => clearTimeout(t);
+  }, [over]);
+  useEffect(() => {
+    if (placed) getCurrentWindow().setIgnoreCursorEvents(!open);
+  }, [open, placed]);
   return open;
 }
 
@@ -219,10 +208,11 @@ function Island() {
   const [notch, setNotch] = useState<Notch | null>(null);
   const islandRef = useRef<HTMLDivElement>(null);
   const active = useActiveLine(song, clock, islandRef);
-  const open = useHover(islandRef, !!notch);
+  const open = useOpen(islandRef, !!notch);
 
   useEffect(() => {
-    invoke<Notch>("island_place", WINDOW).then((n) => {
+    const screen = Number(location.hash.split("=")[1]) || null;
+    invoke<Notch>("island_place", { ...WINDOW, screen }).then((n) => {
       setNotch(n);
       getCurrentWindow().show();
     });
@@ -230,9 +220,10 @@ function Island() {
 
   if (!notch) return null;
   const nh = notch.height;
-  // With a notch, the compact island wraps it: cover and beat in the menu bar row, the line just below.
-  // Without one it is a single row at the top edge of the screen.
-  const compactHeight = nh ? nh + 30 : 36;
+  // Folded, the island is one row as tall as the menu bar, so it covers nothing below it. With a notch it
+  // wraps it closely, cover and beat either side; the line waits for the hover. Without one the row holds it.
+  const compactWidth = nh ? notch.width + WING * 2 : 280;
+  const compactHeight = notch.bar;
   const top = nh ? nh + 10 : 12;
   const expandedHeight = top + 166;
   const line = song?.lines[active];
@@ -243,29 +234,24 @@ function Island() {
     <div
       ref={islandRef}
       data-open={open || undefined}
-      className="group absolute top-0 left-1/2 -translate-x-1/2 cursor-default select-none overflow-hidden rounded-b-[18px] bg-black text-white transition-[width,height,border-radius,box-shadow] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] data-open:rounded-b-[28px] data-open:shadow-[0_12px_40px_rgb(0_0_0/0.45)] motion-reduce:duration-0"
-      style={open ? { width: EXPANDED_WIDTH, height: expandedHeight } : { width: COMPACT_WIDTH, height: compactHeight }}
+      className="group absolute top-0 left-1/2 -translate-x-1/2 cursor-default select-none overflow-hidden rounded-b-[12px] bg-black text-white transition-[width,height,border-radius,box-shadow] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] data-open:rounded-b-[28px] data-open:shadow-[0_12px_40px_rgb(0_0_0/0.45)] motion-reduce:duration-0"
+      style={open ? { width: EXPANDED_WIDTH, height: expandedHeight } : { width: compactWidth, height: compactHeight }}
     >
       {/* Compact. Each layer keeps its own size while the island grows, so nothing reflows mid-motion. */}
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 transition-[opacity,scale,filter] delay-150 duration-300 group-data-open:scale-95 group-data-open:opacity-0 group-data-open:blur-sm group-data-open:delay-0 group-data-open:duration-150"
-        style={{ width: COMPACT_WIDTH, height: compactHeight }}
+        style={{ width: compactWidth, height: compactHeight }}
         aria-hidden={open}
       >
         {nh ? (
-          <>
-            <div className="flex items-center justify-between px-3.5" style={{ height: nh }}>
-              {song ? <img src={song.cover} alt="" className="size-5 rounded-[5px]" /> : <span />}
-              <Beat playing={playing} />
-            </div>
-            <p className="truncate px-4 text-center text-[13px] leading-[22px] font-medium">
-              <Sung line={line} at={active} fallback={title} />
-            </p>
-          </>
+          <div className="flex h-full items-center justify-between px-2.5">
+            {song ? <img src={song.cover} alt="" className="size-5 rounded-[5px]" /> : <span />}
+            <Beat playing={playing} />
+          </div>
         ) : (
-          <div className="flex h-full items-center gap-2.5 px-3">
-            {song && <img src={song.cover} alt="" className="size-5 shrink-0 rounded-[5px]" />}
-            <p className="min-w-0 flex-1 truncate text-center text-[13px] font-medium">
+          <div className="flex h-full items-center gap-2 px-2.5">
+            {song && <img src={song.cover} alt="" className="size-4 shrink-0 rounded-[4px]" />}
+            <p className="min-w-0 flex-1 truncate text-center text-xs font-medium">
               <Sung line={line} at={active} fallback={title} />
             </p>
             <Beat playing={playing} />
@@ -294,18 +280,19 @@ function Island() {
           </p>
           <p className="h-[18px] truncate text-[13px] leading-[18px] text-white/60">{line ? sub : ""}</p>
         </div>
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" size="icon-sm" className="text-white" aria-label="切换为歌词条" title="切换为歌词条" onClick={control("lyricsBar")}>
-            <ArrowLineDownIcon />
-          </Button>
+        {/* The close button balances an empty slot on the left, so the transport sits in the middle. */}
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center">
+          <span />
           <div className="flex gap-1">
             <Transport playing={playing} />
           </div>
-          <CloseButton />
+          <div className="justify-self-end">
+            <CloseButton label="关闭灵动岛" action="island" />
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-createRoot(document.getElementById("root")!).render(location.hash === "#island" ? <Island /> : <Bar />);
+createRoot(document.getElementById("root")!).render(location.hash.startsWith("#island") ? <Island /> : <Bar />);

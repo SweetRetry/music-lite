@@ -14,29 +14,56 @@ mod tray;
 use tauri::{Manager, WindowEvent};
 use tauri_plugin_window_state::StateFlags;
 
-// Puts the lyrics island at the top middle of the screen, sized width by height points, and returns the notch.
+// Runs f on the main thread, where AppKit must be called, and waits for its result.
+#[cfg(target_os = "macos")]
+fn on_main<T: Send + 'static>(window: &tauri::WebviewWindow, f: impl FnOnce(&tauri::WebviewWindow) -> tauri::Result<T> + Send + 'static) -> Result<T, String> {
+    let (tx, rx) = std::sync::mpsc::channel();
+    let w = window.clone();
+    window.run_on_main_thread(move || drop(tx.send(f(&w)))).map_err(|e| e.to_string())?;
+    rx.recv().map_err(|e| e.to_string())?.map_err(|e| e.to_string())
+}
+
+// The screens the lyrics island can sit on. Empty where the island cannot choose.
 #[tauri::command]
-fn island_place(window: tauri::WebviewWindow, width: f64, height: f64) -> Result<serde_json::Value, String> {
+fn island_screens(window: tauri::WebviewWindow) -> Result<serde_json::Value, String> {
     #[cfg(target_os = "macos")]
-    {
-        let (tx, rx) = std::sync::mpsc::channel();
-        let w = window.clone();
-        window
-            .run_on_main_thread(move || {
-                let _ = tx.send(macos::place_island(&w, width, height).map_err(|e| e.to_string()));
-            })
-            .map_err(|e| e.to_string())?;
-        let notch = rx.recv().map_err(|e| e.to_string())??;
-        serde_json::to_value(notch).map_err(|e| e.to_string())
-    }
+    return on_main(&window, |_| Ok(macos::screens())).and_then(|s| serde_json::to_value(s).map_err(|e| e.to_string()));
     #[cfg(not(target_os = "macos"))]
     {
+        let _ = window;
+        Ok(serde_json::json!([]))
+    }
+}
+
+// Puts the lyrics island at the top middle of a screen, sized width by height points, and returns the notch.
+#[tauri::command]
+fn island_place(window: tauri::WebviewWindow, width: f64, height: f64, screen: Option<u32>) -> Result<serde_json::Value, String> {
+    #[cfg(target_os = "macos")]
+    return on_main(&window, move |w| macos::place_island(w, width, height, screen))
+        .and_then(|n| serde_json::to_value(n).map_err(|e| e.to_string()));
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = screen;
         let monitor = window.primary_monitor().map_err(|e| e.to_string())?.ok_or("no monitor")?;
         let scale = monitor.scale_factor();
         let x = monitor.position().x as f64 / scale + (monitor.size().width as f64 / scale - width) / 2.0;
         window.set_size(tauri::LogicalSize::new(width, height)).map_err(|e| e.to_string())?;
         window.set_position(tauri::LogicalPosition::new(x, monitor.position().y as f64 / scale)).map_err(|e| e.to_string())?;
-        Ok(serde_json::json!({ "width": 0, "height": 0 }))
+        Ok(serde_json::json!({ "width": 0, "height": 0, "bar": 32 }))
+    }
+}
+
+// The cursor in the calling window's points, from its top left.
+#[tauri::command]
+fn window_cursor(window: tauri::WebviewWindow) -> Result<(f64, f64), String> {
+    #[cfg(target_os = "macos")]
+    return on_main(&window, macos::cursor);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let scale = window.scale_factor().map_err(|e| e.to_string())?;
+        let c = window.cursor_position().map_err(|e| e.to_string())?;
+        let p = window.inner_position().map_err(|e| e.to_string())?;
+        Ok(((c.x - p.x as f64) / scale, (c.y - p.y as f64) / scale))
     }
 }
 
@@ -78,7 +105,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             eapi::eapi,
             tray::now_playing,
+            island_screens,
             island_place,
+            window_cursor,
             login::login_qr_poll,
             login::login_official_available,
             login::login_official,

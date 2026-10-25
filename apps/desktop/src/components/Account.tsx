@@ -22,7 +22,7 @@ import { providers, useProvider } from "../providers";
 import { requestQqAccess, useQqAccess } from "../qqapi";
 import { toast } from "sonner";
 import { useCached } from "./states";
-import { ThemeToggle } from "./ThemeToggle";
+import { SettingsMenu } from "./SettingsMenu";
 
 // Both the service and account own the membership cache.
 function Membership({ id, uid, load }: { id: ProviderId; uid: number; load: () => Promise<Vip | null> }) {
@@ -126,7 +126,7 @@ export function Account() {
         <span className="w-full truncate text-sm font-medium text-foreground">{me.nickname}</span>
         {vip && <Membership id={id} uid={me.uid} load={vip} />}
       </div>
-      <ThemeToggle />
+      <SettingsMenu />
     </div>
   );
 }

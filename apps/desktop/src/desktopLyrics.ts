@@ -1,5 +1,5 @@
-// The desktop lyrics: a see-through window above every app, showing the line being sung, as a bar or as an
-// island at the top of the screen. The player lives in the main window, so this side loads the lyrics and
+// The desktop lyrics: see-through windows above every app showing the line being sung. A bar the user places,
+// and an island at the top of a screen, each on or off by itself. The player lives in the main window, so this side loads the lyrics and
 // broadcasts the song and the clock. The lyrics window only draws.
 import { isTauri } from "@tauri-apps/api/core";
 import { emit, listen } from "@tauri-apps/api/event";
@@ -9,21 +9,24 @@ import { artistNames, cover } from "./format";
 import { cachedLyric, loadLyric } from "./lyrics";
 import type { ProviderId } from "./mode";
 import { player, usePlayer } from "./player";
-import { type DesktopLyricsMode, useUi } from "./ui";
+import { useUi } from "./ui";
 
-// One window per mode. The island's label is also in lib.rs (window-state denylist) and the capabilities.
-const LABELS: Record<DesktopLyricsMode, string> = { bar: "desktop-lyrics", island: "lyrics-island" };
-
-// The island stays put and sizes itself, so it is created hidden and shows once placed.
-const WINDOWS = {
-  bar: { url: "desktop-lyrics.html", width: 760, height: 140, minWidth: 360, minHeight: 96, center: true, resizable: true },
-  island: { url: "desktop-lyrics.html#island", width: 500, height: 260, resizable: false, visible: false },
-} satisfies Record<DesktopLyricsMode, object>;
-
-// The window asks for both on load, and gets each again whenever it changes.
+// The windows ask for both on load, and get each again whenever it changes.
 export type Song = { title: string; artist: string; cover: string; brand: ProviderId; lines: LyricLine[] } | null;
-// Where playback was at the wall clock time `at`. The window runs it forward while playing.
+// Where playback was at the wall clock time `at`. The windows run it forward while playing.
 export type Clock = { ms: number; at: number; playing: boolean };
+
+type Kind = "bar" | "island";
+
+// The island's label is also in lib.rs (window-state denylist) and the capabilities.
+const LABELS: Record<Kind, string> = { bar: "desktop-lyrics", island: "lyrics-island" };
+
+// The island stays put and sizes itself, so it is created hidden and shows once placed. Its screen rides in
+// the URL: a new screen is a new window.
+const windows = (screen: number | null) => ({
+  bar: { url: "desktop-lyrics.html", width: 760, height: 140, minWidth: 360, minHeight: 96, center: true, resizable: true },
+  island: { url: `desktop-lyrics.html#island=${screen ?? ""}`, width: 500, height: 260, resizable: false, visible: false },
+});
 
 let song: Song = null;
 let shown: Track | undefined;
@@ -43,17 +46,15 @@ async function follow(track: Track | undefined) {
   sendSong();
 }
 
-const destroy = async (label: string) => (await WebviewWindow.getByLabel(label))?.destroy();
+const destroy = async (kind: Kind) => (await WebviewWindow.getByLabel(LABELS[kind]))?.destroy();
 
-async function open(mode: DesktopLyricsMode) {
-  const other = mode === "bar" ? "island" : "bar";
-  await destroy(LABELS[other]);
-  if (await WebviewWindow.getByLabel(LABELS[mode])) return;
-  follow(current());
+async function open(kind: Kind) {
+  if (await WebviewWindow.getByLabel(LABELS[kind])) return;
+  if (!shown) follow(current());
   // The bar comes back where it was last time, by the window-state plugin.
-  const w = new WebviewWindow(LABELS[mode], {
-    ...WINDOWS[mode],
-    title: "桌面歌词",
+  const w = new WebviewWindow(LABELS[kind], {
+    ...windows(useUi.getState().islandScreen)[kind],
+    title: kind === "bar" ? "桌面歌词" : "灵动岛",
     transparent: true,
     decorations: false,
     shadow: false,
@@ -63,14 +64,10 @@ async function open(mode: DesktopLyricsMode) {
     focus: false,
     acceptFirstMouse: true,
   });
-  w.once("tauri://error", () => useUi.getState().toggleDesktopLyrics(false));
+  w.once("tauri://error", () => (kind === "bar" ? useUi.getState().toggleDesktopLyrics(false) : useUi.getState().toggleIsland(false)));
 }
 
-async function close() {
-  shown = undefined;
-  song = null;
-  await Promise.all(Object.values(LABELS).map(destroy));
-}
+const anyOpen = () => useUi.getState().desktopLyricsOpen || useUi.getState().islandOpen;
 
 const current = () => {
   const { queue, index } = usePlayer.getState();
@@ -83,15 +80,20 @@ if (isTauri()) {
     sendClock();
   });
 
-  const sync = () => {
-    const { desktopLyricsOpen, desktopLyricsMode } = useUi.getState();
-    (desktopLyricsOpen ? open(desktopLyricsMode) : close()).catch(() => {});
-  };
-  sync();
-  useUi.subscribe((s, prev) => (s.desktopLyricsOpen !== prev.desktopLyricsOpen || s.desktopLyricsMode !== prev.desktopLyricsMode) && sync());
+  const sync = (kind: Kind, on: boolean) => (on ? open(kind) : destroy(kind)).catch(() => {});
+  const { desktopLyricsOpen, islandOpen } = useUi.getState();
+  sync("bar", desktopLyricsOpen);
+  sync("island", islandOpen);
+  useUi.subscribe((s, prev) => {
+    if (s.desktopLyricsOpen !== prev.desktopLyricsOpen) sync("bar", s.desktopLyricsOpen);
+    if (s.islandScreen !== prev.islandScreen && s.islandOpen) destroy("island").then(() => sync("island", true));
+    else if (s.islandOpen !== prev.islandOpen) sync("island", s.islandOpen);
+    // With both closed nothing listens, and the next open starts from the song playing then.
+    if (!anyOpen()) shown = undefined;
+  });
 
   usePlayer.subscribe((s, prev) => {
-    if (!useUi.getState().desktopLyricsOpen) return;
+    if (!anyOpen()) return;
     if (current() !== shown) follow(current());
     if (s.playing !== prev.playing || s.position !== prev.position) sendClock();
   });
