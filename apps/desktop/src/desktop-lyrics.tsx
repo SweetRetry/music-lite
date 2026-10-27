@@ -3,7 +3,7 @@
 // same "control" events the tray sends.
 import "@music-lite/ui/globals.css";
 import { Button } from "@music-lite/ui/components/ui/button";
-import { PauseIcon, PlayIcon, SkipBackIcon, SkipForwardIcon, XIcon } from "@phosphor-icons/react";
+import { HeartIcon, PauseIcon, PlayIcon, SkipBackIcon, SkipForwardIcon, XIcon } from "@phosphor-icons/react";
 import { invoke } from "@tauri-apps/api/core";
 import { emit, listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -11,7 +11,7 @@ import { type RefObject, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import type { LyricLine } from "./api";
 import type { Clock, Song } from "./desktopLyrics";
-import { lineAt } from "./format";
+import { duration, lineAt } from "./format";
 
 const control = (action: string) => () => emit("control", action);
 
@@ -103,6 +103,22 @@ function Transport({ playing }: { playing: boolean }) {
       </Button>
     </>
   );
+}
+
+// Elapsed time, ticking while playing. The clock is a ref, so this reads it twice a second.
+function useElapsed(clock: RefObject<Clock>, on: boolean) {
+  const [ms, setMs] = useState(0);
+  useEffect(() => {
+    if (!on) return;
+    const read = () => {
+      const c = clock.current;
+      setMs(c.playing ? c.ms + Date.now() - c.at : c.ms);
+    };
+    read();
+    const id = setInterval(read, 500);
+    return () => clearInterval(id);
+  }, [on]);
+  return ms;
 }
 
 const CloseButton = ({ label, action }: { label: string; action: string }) => (
@@ -209,6 +225,7 @@ function Island() {
   const islandRef = useRef<HTMLDivElement>(null);
   const active = useActiveLine(song, clock, islandRef);
   const open = useOpen(islandRef, !!notch);
+  const elapsed = useElapsed(clock, open);
 
   useEffect(() => {
     const screen = Number(location.hash.split("=")[1]) || null;
@@ -225,7 +242,7 @@ function Island() {
   const compactWidth = nh ? notch.width + WING * 2 : 280;
   const compactHeight = notch.bar;
   const top = nh ? nh + 10 : 12;
-  const expandedHeight = top + 166;
+  const expandedHeight = top + 186;
   const line = song?.lines[active];
   const title = song?.title ?? "Music Lite";
   const sub = subLine(song, active);
@@ -280,13 +297,33 @@ function Island() {
           </p>
           <p className="h-[18px] truncate text-[13px] leading-[18px] text-white/60">{line ? sub : ""}</p>
         </div>
-        {/* The close button balances an empty slot on the left, so the transport sits in the middle. */}
+        <div className="flex items-center gap-2 text-[11px] text-white/60 tabular-nums">
+          <span className="w-9">{duration(elapsed)}</span>
+          <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/20">
+            <div className="h-full bg-white/80" style={{ width: `${song?.durationMs ? Math.min(100, (elapsed / song.durationMs) * 100) : 0}%` }} />
+          </div>
+          <span className="w-9 text-right">{duration(song?.durationMs ?? 0)}</span>
+        </div>
+        {/* The like button balances the close button, so the transport sits in the middle. */}
         <div className="grid grid-cols-[1fr_auto_1fr] items-center">
-          <span />
+          <div className="-ml-2">
+            {song && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className={song.liked ? "text-primary" : "text-white"}
+                aria-label={song.liked ? "取消喜欢" : "喜欢"}
+                aria-pressed={song.liked}
+                onClick={control("like")}
+              >
+                <HeartIcon weight={song.liked ? "fill" : "regular"} />
+              </Button>
+            )}
+          </div>
           <div className="flex gap-1">
             <Transport playing={playing} />
           </div>
-          <div className="justify-self-end">
+          <div className="-mr-2 justify-self-end">
             <CloseButton label="关闭灵动岛" action="island" />
           </div>
         </div>

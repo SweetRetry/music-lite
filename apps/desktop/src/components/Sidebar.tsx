@@ -11,6 +11,7 @@ import {
 } from "@music-lite/ui/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@music-lite/ui/components/ui/tooltip";
 import { Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { CalendarBlankIcon, HeartIcon, PlusIcon } from "@phosphor-icons/react";
 import type { PlaylistSummary } from "../api";
 import { cover } from "../format";
@@ -36,7 +37,27 @@ function Playing({ origin }: { origin: string }) {
   return <span className="eq ml-auto shrink-0" data-playing={playing} role="img" aria-label="正在播放" />;
 }
 
+// Today's date, moving on at midnight. A sleeping laptop misses the timer, so waking up checks again.
+function useToday() {
+  const [day, setDay] = useState(() => new Date().getDate());
+  useEffect(() => {
+    const check = () => setDay(new Date().getDate());
+    const next = new Date();
+    next.setHours(24, 0, 1, 0);
+    const timer = setTimeout(check, next.getTime() - Date.now());
+    document.addEventListener("visibilitychange", check);
+    window.addEventListener("focus", check);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", check);
+      window.removeEventListener("focus", check);
+    };
+  }, [day]);
+  return day;
+}
+
 export function Sidebar() {
+  const today = useToday();
   const me = useLibrary((s) => s.me);
   const likedId = me?.playlists.find((p) => p.liked)?.id;
 
@@ -55,7 +76,7 @@ export function Sidebar() {
                 <span className={`relative ${glyph}`}>
                   <CalendarBlankIcon className="size-6!" />
                   <span className="absolute inset-x-0 top-3 text-center text-[9px] leading-none font-semibold tabular-nums">
-                    {new Date().getDate()}
+                    {today}
                   </span>
                 </span>
                 <span>每日推荐</span>

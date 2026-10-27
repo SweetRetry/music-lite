@@ -8,11 +8,20 @@ import { type LyricLine, type Track, srcOf } from "./api";
 import { artistNames, cover } from "./format";
 import { cachedLyric, loadLyric } from "./lyrics";
 import type { ProviderId } from "./mode";
+import { useLibrary } from "./library";
 import { player, usePlayer } from "./player";
 import { useUi } from "./ui";
 
 // The windows ask for both on load, and get each again whenever it changes.
-export type Song = { title: string; artist: string; cover: string; brand: ProviderId; lines: LyricLine[] } | null;
+export type Song = {
+  title: string;
+  artist: string;
+  cover: string;
+  brand: ProviderId;
+  durationMs: number;
+  liked: boolean;
+  lines: LyricLine[];
+} | null;
 // Where playback was at the wall clock time `at`. The windows run it forward while playing.
 export type Clock = { ms: number; at: number; playing: boolean };
 
@@ -37,7 +46,10 @@ const sendClock = () =>
 
 async function follow(track: Track | undefined) {
   shown = track;
-  song = track ? { title: track.name, artist: artistNames(track), cover: cover(track.cover, 48), brand: srcOf(track), lines: cachedLyric(track) ?? [] } : null;
+  song = track ? { title: track.name, artist: artistNames(track), cover: cover(track.cover, 48), brand: srcOf(track),
+        durationMs: track.durationMs,
+        liked: useLibrary.getState().liked.has(track.id),
+        lines: cachedLyric(track) ?? [] } : null;
   sendSong();
   if (!track || cachedLyric(track)) return;
   const lines = await loadLyric(track).catch(() => []);
@@ -90,6 +102,14 @@ if (isTauri()) {
     else if (s.islandOpen !== prev.islandOpen) sync("island", s.islandOpen);
     // With both closed nothing listens, and the next open starts from the song playing then.
     if (!anyOpen()) shown = undefined;
+  });
+
+  useLibrary.subscribe((s, prev) => {
+    if (s.liked === prev.liked || !song || !shown) return;
+    const liked = s.liked.has(shown.id);
+    if (liked === song.liked) return;
+    song = { ...song, liked };
+    sendSong();
   });
 
   usePlayer.subscribe((s, prev) => {
