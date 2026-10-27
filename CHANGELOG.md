@@ -1,10 +1,12 @@
-# 更新记录
+# Changelog
 
-从 2026-10-25 开始记录。每一条写用户能看到的变化，最新的在上面。
+All notable changes to this project are documented in this file.
 
-## 未发布
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries are written in Chinese and describe what users see.
 
-### 新增
+## [Unreleased]
+
+### Added
 
 - 桌面歌词。一条透明歌词窗口浮在所有应用上方，在每个桌面都显示，关掉主窗口后也还在。拖动任意位置可以移动，拉边缘可以调大小，下次打开回到原来的位置。逐字歌词按演唱进度填上品牌色，下面一行是翻译，没有翻译时是下一句。悬停时显示上一首、播放暂停、下一首和关闭。
 - 灵动岛。黑色胶囊贴在屏幕顶部正中，盖在菜单栏上方，有刘海时包住刘海。平时只有菜单栏那么高，只占刘海两侧一小段，显示封面和节拍，不挡下面的内容。悬停时带弹性过渡展开，显示歌曲、当前歌词和翻译、播放控制，移开 0.2 秒后收起。没展开时，胶囊以外的区域点击会穿透到后面。
@@ -12,14 +14,15 @@
 - 桌面歌词和灵动岛各自开关，可以同时打开，开关状态会记住。
 - 设置菜单。左下角账号右侧原来的外观按钮换成齿轮，点开是下拉菜单，里面有外观（跟随系统、浅色、深色）、桌面歌词、灵动岛和灵动岛显示器。
 - 播放栏多了桌面歌词按钮，托盘菜单多了「桌面歌词」和「灵动岛」两个勾选项。
-
 - 灵动岛展开后多了播放进度（已播、进度条、总时长）和「喜欢」按钮，喜欢状态与主窗口同步。
 
-### 修复
-
-- 侧边栏「每日推荐」的日历图标过了零点还停在前一天的日期，现在零点后会自己更新，电脑休眠醒来也会重新对一次。
-
-### 注意
+### Changed
 
 - 应用标识从 `com.sweetretry.ncmlite` 改成了 `com.sweetretry.musiclite`。macOS 会把新版当成另一个应用，所以 QQ 音乐的登录文件授权要重新给一次，在账号菜单里点「授权 QQ 音乐」。播放队列和设置不会自动带过来，需要把 `~/Library/WebKit/com.sweetretry.ncmlite` 复制成 `~/Library/WebKit/com.sweetretry.musiclite`。
 - 为了透明窗口启用了 Tauri 的 `macOSPrivateApi`，应用不能上架 Mac App Store。
+
+### Fixed
+
+- 侧边栏「每日推荐」的日历图标过了零点还停在前一天的日期，现在零点后会自己更新，电脑休眠醒来也会重新对一次。
+
+[Unreleased]: https://github.com/SweetRetry/music-lite/commits/main
