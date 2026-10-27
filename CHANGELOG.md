@@ -24,5 +24,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - 侧边栏「每日推荐」的日历图标过了零点还停在前一天的日期，现在零点后会自己更新，电脑休眠醒来也会重新对一次。
+- 换了显示器（接上、拔掉外接屏或调整排列）后，灵动岛会消失或错位。现在显示器一变，它会自己回到该在的屏幕顶部正中，刘海尺寸也跟着更新。之前选的显示器重新接上后，灵动岛会回到它上面。
 
 [Unreleased]: https://github.com/SweetRetry/music-lite/commits/main

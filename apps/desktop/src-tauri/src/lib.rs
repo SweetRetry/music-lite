@@ -87,6 +87,8 @@ pub fn run() {
             if let Some(window) = app.get_webview_window("main") {
                 macos::unified_toolbar(&window)?;
             }
+            #[cfg(target_os = "macos")]
+            macos::watch_screens(app.handle().clone());
             tray::create(app.handle())?;
             shortcuts::register(app.handle());
             mcp::serve(app.handle().clone());

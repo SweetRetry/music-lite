@@ -227,12 +227,17 @@ function Island() {
   const open = useOpen(islandRef, !!notch);
   const elapsed = useElapsed(clock, open);
 
+  // Placed again whenever displays come, go or move: the remembered screen may be back, or gone.
   useEffect(() => {
     const screen = Number(location.hash.split("=")[1]) || null;
-    invoke<Notch>("island_place", { ...WINDOW, screen }).then((n) => {
-      setNotch(n);
-      getCurrentWindow().show();
-    });
+    const place = () =>
+      invoke<Notch>("island_place", { ...WINDOW, screen }).then((n) => {
+        setNotch(n);
+        getCurrentWindow().show();
+      });
+    place();
+    const off = listen("screens-changed", place);
+    return () => void off.then((f) => f());
   }, []);
 
   if (!notch) return null;

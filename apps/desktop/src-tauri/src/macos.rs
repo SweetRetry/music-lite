@@ -88,6 +88,25 @@ pub fn place_island(window: &tauri::WebviewWindow, width: f64, height: f64, scre
     Ok(notch)
 }
 
+// Plugging in or unplugging a display, or rearranging them, moves screens under the island and can change
+// its notch. Each time, the island hears "screens-changed" and places itself again.
+pub fn watch_screens(app: tauri::AppHandle) {
+    use tauri::Emitter;
+    let center = objc2_foundation::NSNotificationCenter::defaultCenter();
+    let block = block2::RcBlock::new(move |_| drop(app.emit("screens-changed", ())));
+    // SAFETY: the name is AppKit's own constant, and the block holds only a Send + Sync app handle.
+    let observer = unsafe {
+        center.addObserverForName_object_queue_usingBlock(
+            Some(objc2_app_kit::NSApplicationDidChangeScreenParametersNotification),
+            None,
+            None,
+            &block,
+        )
+    };
+    // The app watches for as long as it runs.
+    std::mem::forget(observer);
+}
+
 // The cursor in the window's own points, from its top left: what the page calls clientX and clientY. Both
 // readings are in AppKit's global points, so screens of different scales agree.
 pub fn cursor(window: &tauri::WebviewWindow) -> tauri::Result<(f64, f64)> {
