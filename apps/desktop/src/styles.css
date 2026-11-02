@@ -42,10 +42,14 @@ body {
   }
 }
 
+/* Covers are pictures in an app, not content: no selection highlight, no dragging them out. */
 img {
   display: block;
   object-fit: cover;
   background: var(--muted);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
 }
 
 .muted {
@@ -67,8 +71,8 @@ img {
   --gutter: 8px;
   /* The content's side padding. The player bar lines up with the list above it. */
   --inset: 48px;
-  /* The lyrics page's side padding. The player bar over it keeps to the same lines. */
-  --stage-pad: 80px;
+  /* The lyrics page's side padding, wider on a big window. The player bar over it keeps to the same lines. */
+  --stage-pad: clamp(80px, 7vw, 200px);
   position: relative;
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr;
@@ -418,11 +422,15 @@ button:disabled {
 }
 
 .lyrics {
+  /* The cover and the lines grow with the window, so a big screen is filled, not left half empty.
+     The cover also keeps to the height, so a wide but short window does not push its title off. */
+  --cover: min(clamp(320px, 28vw, 560px), 52vh);
+  --line: clamp(28px, 2.2vw, 42px);
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: var(--cover) minmax(0, 1fr);
   /* One row as tall as the view. The lyrics column clips instead of scrolling, so an auto row would grow to every line. */
   grid-template-rows: minmax(0, 1fr);
-  gap: 96px;
+  gap: clamp(96px, 7vw, 180px);
   padding: var(--titlebar) var(--stage-pad) 88px;
   background: var(--background);
   overflow: hidden;
@@ -514,24 +522,24 @@ button:disabled {
 }
 
 .lyrics__meta img {
-  width: 320px;
-  height: 320px;
-  border-radius: 16px;
+  width: var(--cover);
+  height: var(--cover);
+  border-radius: calc(var(--cover) / 20);
   box-shadow: 0 24px 64px -16px rgb(0 0 0 / 0.5);
   margin-bottom: 16px;
 }
 
 .lyrics__meta h1 {
-  font-size: 20px;
-  line-height: 28px;
+  font-size: clamp(20px, 1.6vw, 30px);
+  line-height: 1.4;
   font-weight: 600;
   letter-spacing: -0.018em;
   text-wrap: balance;
 }
 
 .lyrics__meta p {
-  font-size: 13px;
-  line-height: 18px;
+  font-size: clamp(13px, 1vw, 17px);
+  line-height: 1.4;
 }
 
 /* clip, not hidden: a focused line must not scroll the box behind the transform's back. */
@@ -545,11 +553,11 @@ button:disabled {
   flex-direction: column;
   gap: 2px;
   width: 100%;
-  padding: 8px 12px;
+  padding: calc(var(--line) * 0.3) calc(var(--line) * 0.43);
   border-radius: 8px;
   text-align: left;
-  font-size: 28px;
-  line-height: 38px;
+  font-size: var(--line);
+  line-height: 1.36;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: color-mix(in srgb, var(--muted-foreground) 55%, transparent);
@@ -570,14 +578,14 @@ button:disabled {
 }
 
 .lyrics__trans {
-  font-size: 16px;
-  line-height: 24px;
+  font-size: calc(var(--line) * 0.57);
+  line-height: 1.5;
   font-weight: 400;
 }
 
 .lyrics__empty {
-  font-size: 20px;
-  line-height: 28px;
+  font-size: calc(var(--line) * 0.72);
+  line-height: 1.4;
 }
 
 /* Word-timed lines: each word fills left to right as it is sung. */

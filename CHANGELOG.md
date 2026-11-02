@@ -21,9 +21,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - 应用标识从 `com.sweetretry.ncmlite` 改成了 `com.sweetretry.musiclite`。macOS 会把新版当成另一个应用，所以 QQ 音乐的登录文件授权要重新给一次，在账号菜单里点「授权 QQ 音乐」。播放队列和设置不会自动带过来，需要把 `~/Library/WebKit/com.sweetretry.ncmlite` 复制成 `~/Library/WebKit/com.sweetretry.musiclite`。
 - 为了透明窗口启用了 Tauri 的 `macOSPrivateApi`，应用不能上架 Mac App Store。
+- 歌词页跟着窗口放大。大屏上封面、歌词和两边留白一起变大，不再只占左半边。窄而矮的窗口里封面按高度收小，歌名不会被挤出去。
 
 ### Fixed
 
+- 封面图片不能再被选中或拖出窗口。
 - 侧边栏「每日推荐」的日历图标过了零点还停在前一天的日期，现在零点后会自己更新，电脑休眠醒来也会重新对一次。
 - 换了显示器（接上、拔掉外接屏或调整排列）后，灵动岛会消失或错位。现在显示器一变，它会自己回到该在的屏幕顶部正中，刘海尺寸也跟着更新。之前选的显示器重新接上后，灵动岛会回到它上面。
 
