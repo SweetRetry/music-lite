@@ -11,8 +11,8 @@
  * Standard shadcn tokens. Two things vary independently. theme.ts puts .dark on <html> for the dark
  * appearance, and for "system" when the OS is dark. The brand is the music service on screen, set as
  * data-brand on <html> from the mode: NetEase Cloud Music is the base below, and every other brand
- * overrides only the tokens that differ, further down. A brand sets --brand, which primary, ring and the
- * sidebar's primary all follow, and may bring its own neutrals. accent is the hover fill and is kept a
+ * overrides only the tokens that differ, further down. A brand sets only --brand, which primary, ring and the
+ * sidebar's primary all follow. The neutrals are shared by every brand. accent is the hover fill and is kept a
  * step apart from muted and secondary, which are resting fills, so a hovered row never melts into a
  * resting chip. Selection uses primary, never accent.
  */
@@ -84,52 +84,16 @@
 }
 
 /*
- * QQ Music. Green, with neutrals that lean green instead of NetEase's blue. A brand has to say everything
- * that differs in both appearances: the dark block is the more specific one, so it wins over the light block
- * when .dark is on. The green is darker in light so white text on it stays readable.
+ * QQ Music. Only the brand color differs; the neutrals stay NetEase's, so switching services repaints
+ * nothing but primary. The dark block is the more specific one, so it wins when .dark is on. The green
+ * is darker in light so white text on it stays readable.
  */
 :root[data-brand="qq"] {
   --brand: #17a864;
-  --foreground: #1f2623;
-  --card-foreground: #1f2623;
-  --popover-foreground: #1f2623;
-  --secondary: #f1f4f2;
-  --secondary-foreground: #1f2623;
-  --muted: #f1f4f2;
-  --muted-foreground: #78807c;
-  --accent: #e3e9e6;
-  --accent-foreground: #1f2623;
-  --border: #e3e9e6;
-  --input: #d9e0dc;
-  --sidebar: #f5f8f6;
-  --sidebar-foreground: #1f2623;
-  --sidebar-accent: #e6ece9;
-  --sidebar-accent-foreground: #1f2623;
-  --sidebar-border: #e3e9e6;
 }
 
 :root[data-brand="qq"].dark {
   --brand: #31c27c;
-  --background: #121513;
-  --foreground: #e5e9e7;
-  --card: #1c201d;
-  --card-foreground: #e5e9e7;
-  --popover: #292e2b;
-  --popover-foreground: #e5e9e7;
-  --secondary: #252a27;
-  --secondary-foreground: #e5e9e7;
-  --muted: #212623;
-  --muted-foreground: #8b928e;
-  --accent: #323834;
-  --accent-foreground: #ffffff;
-  --border: #292e2b;
-  --input: #394039;
-  --sidebar: #181c19;
-  --shell: #121513;
-  --sidebar-foreground: #e5e9e7;
-  --sidebar-accent: #2a2f2c;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #292e2b;
 }
 
 @theme inline {
